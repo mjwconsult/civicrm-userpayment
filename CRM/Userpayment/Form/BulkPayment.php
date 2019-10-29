@@ -4,9 +4,10 @@
  */
 
 /**
- * This form records additional payments needed when event/contribution is partially paid.
+ * This form collects and processes the "bulk" payment.
+ * The previous form generates a contribution linked to a collection of contributions.
  */
-class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
+class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
 
   /**
    * Pre process form.
@@ -36,10 +37,10 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
 
     $this->assign('contactId', $this->getContactID());
     $this->assign('contributionBalance', $this->getContributionBalance());
-    $intro = htmlspecialchars_decode(\Civi::settings()->get('userpayment_paymentadd_introduction'));
+    $intro = htmlspecialchars_decode(\Civi::settings()->get('userpayment_paymentbulk_introduction'));
     $this->assign('introduction', $intro);
 
-    $this->setTitle(\Civi::settings()->get('userpayment_paymentadd_title'));
+    $this->setTitle(\Civi::settings()->get('userpayment_paymentbulk_title'));
   }
 
   /**
@@ -60,9 +61,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
       $attributes['total_amount'],
       FALSE, 'currency', NULL
     );
-    if ((bool)\Civi::settings()->get('userpayment_paymentadd_freezeamount')) {
-      $totalAmountField->freeze();
-    }
+    $totalAmountField->freeze();
 
     $this->addField('trxn_date', ['entity' => 'FinancialTrxn', 'label' => ts('Date Received'), 'context' => 'Contribution'], FALSE, FALSE);
     $this->add('hidden', 'coid');
@@ -72,7 +71,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->assign('component', $this->_component);
     $this->assign('email', $this->_contributorEmail);
 
-    if (\Civi::settings()->get('userpayment_paymentadd_captcha')) {
+    if (\Civi::settings()->get('userpayment_paymentbulk_captcha')) {
       CRM_Utils_ReCAPTCHA::enableCaptchaOnForm($this);
     }
 
@@ -88,7 +87,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
       ],
     ]);
 
-    $this->addFormRule(['CRM_Userpayment_Form_AddPayment', 'formRule'], $this);
+    $this->addFormRule(['CRM_Userpayment_Form_BulkPayment', 'formRule'], $this);
   }
 
   /**
@@ -119,14 +118,14 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->submit($submittedValues);
 
     // Redirect based on user preference
-    $redirectMode = (int) \Civi::settings()->get('userpayment_paymentadd_redirect');
+    $redirectMode = (int) \Civi::settings()->get('userpayment_paymentbulk_redirect');
     switch ($redirectMode) {
       case self::PAYMENT_REDIRECT_THANKYOU:
         $url = CRM_Utils_System::url('civicrm/user/payment/thankyou', "coid={$this->getContributionID()}&cid={$this->getContactID()}");
         break;
 
       case self::PAYMENT_REDIRECT_URL:
-        $url = \Civi::settings()->get('userpayment_paymentadd_redirecturl');
+        $url = \Civi::settings()->get('userpayment_paymentbulk_redirecturl');
         if (empty(parse_url($url)['host']) && (strpos($url, '/') !== 0)) {
           $url = '/' . $url;
         }
@@ -144,19 +143,56 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->_params = $submittedValues;
     $this->beginPostProcess();
     $this->processBillingAddress();
-
     $this->processCreditCard();
 
-    $trxnsData = $this->_params;
-    //$trxnsData['participant_id'] = $participantId;
-    $trxnsData['contribution_id'] = $this->getContributionID();
-    // From the
-    $trxnsData['is_send_contribution_notification'] = FALSE;
-    $paymentID = civicrm_api3('Payment', 'create', $trxnsData)['id'];
+    if ($this->_params['payment_status_id'] !== CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
+      Civi::log()->debug('Contribution was not completed');
+      CRM_Core_Error::statusBounce('Contribution was not completed');
+      return;
+    }
+
+    // Update all the linked contributions
+    // contributions have already been created.
+    if (empty($this->getContributionID())) {
+      Civi::log()->debug('No contribution ID');
+      CRM_Core_Error::statusBounce('No contribution ID!');
+    }
+
+    // Get the bulk identifier that links these together
+    $bulkIdentifier = civicrm_api3('Contribution', 'getvalue', [
+      'return' => 'check_number',
+      'id' => $this->getContributionID(),
+    ]);
+    $bulkIdentifier = substr($bulkIdentifier, 5);
+
+    // Get all contributions with a "check_number" matching the one specified on the form
+    $contributions = civicrm_api3('Contribution', 'get', [
+      'return' => ["id", 'total_amount'],
+      'check_number' => $bulkIdentifier,
+    ]);
+
+    try {
+      foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
+        // Create a payment for each of these bulk contributions
+        $payment = civicrm_api3('Payment', 'create', [
+            'contribution_id' => $contributionID,
+            'total_amount' => $contributionDetail['total_amount'],
+            'payment_instrument_id' => 'Bulk Payment',
+          ]
+        );
+      }
+    }
+    finally {
+      // Always create the payment record on the contribution - as this is a "real" contribution we record even if there were failures above
+      $trxnsData = $this->_params;
+      $trxnsData['contribution_id'] = $this->getContributionID();
+      $trxnsData['is_send_contribution_notification'] = FALSE;
+      $paymentID = civicrm_api3('Payment', 'create', $trxnsData)['id'];
+    }
 
     $statusMsg = ts('The payment record has been processed.');
     // send email
-    if (!empty($paymentID) && !empty(\Civi::settings()->get('userpayment_paymentadd_emailreceipt'))) {
+    if (!empty($paymentID) && !empty(\Civi::settings()->get('userpayment_paymentbulk_emailreceipt'))) {
       // @todo sort out receipts
       $sendResult = civicrm_api3('Payment', 'sendconfirmation', ['id' => $paymentID])['values'][$paymentID];
       if ($sendResult['is_sent']) {
@@ -184,7 +220,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->_params['invoiceID'] = CRM_Utils_Array::value('invoice_id', $this->_params, md5(uniqid(rand(), TRUE)));
     $this->_params['contactID'] = $this->getContactID();
 
-    if (\Civi::settings()->get('userpayment_paymentadd_emailreceipt')) {
+    if (\Civi::settings()->get('userpayment_paymentbulk_emailreceipt')) {
       list($this->userDisplayName, $this->userEmail) = CRM_Contact_BAO_Contact_Location::getEmailDetails($this->getContactID());
       $this->_params['email'] = $this->_contributorEmail;
       $this->_params['is_email_receipt'] = TRUE;

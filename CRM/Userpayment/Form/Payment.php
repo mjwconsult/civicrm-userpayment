@@ -4,15 +4,82 @@
  */
 
 /**
- * This form records additional payments needed when event/contribution is partially paid.
+ * This is the base class for various payment forms in UserPayment extension
  */
-class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
+class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayment {
+
+  const PAYMENT_REDIRECT_THANKYOU = 0;
+  const PAYMENT_REDIRECT_URL = 1;
+
+  protected $entity = 'Contribution';
+
+  /**
+   * @var int
+   */
+  protected $contactID = NULL;
+
+  /**
+   * @var int
+   */
+  protected $contributionID = NULL;
+
+  /**
+   * @var array
+   */
+  protected $contributionBalance = [];
+
+  protected $_contributorDisplayName = NULL;
+
+  protected $_contributorEmail = NULL;
+
+  protected function getContributionID() {
+    if (empty($this->contributionID)) {
+      $this->contributionID = (int) CRM_Utils_Request::retrieve('coid', 'Positive');
+    }
+    if (empty($this->contributionID)) {
+      $this->contributionID = CRM_Utils_Array::value('contribution_id', $this->_params,
+      CRM_Utils_Array::value('contributionID', $this->_params));
+    }
+    return $this->contributionID;
+  }
+
+  public function getContactID() {
+    if (empty($this->contactID)) {
+      $this->contactID = (int) CRM_Utils_Request::retrieve('cid', 'Positive');
+      if (empty($this->contactID)) {
+        $this->contactID = parent::getContactID();
+      }
+    }
+    return $this->contactID;
+  }
+
+  /**
+   * Test or live mode
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  protected function setMode() {
+    $test = (bool) civicrm_api3('Contribution', 'getvalue', [
+      'return' => "is_test",
+      'id' => $this->getContributionID(),
+    ]);
+    // $this->_mode is used in various places in CiviCRM
+    // Setting it allows the initial paymentprocessor to autoload
+    $this->_mode = $test ? 'test' : 'live';
+  }
+
+  protected function setContributionBalance($contributionBalance) {
+    $this->contributionBalance = $contributionBalance;
+  }
+
+  protected function getContributionBalance() {
+    return $this->contributionBalance;
+  }
 
   /**
    * Pre process form.
    *
    * @throws \CRM_Core_Exception
-   * @throws \CiviCRM_API3_Exception
    */
   public function preProcess() {
     $this->getContactID();
@@ -112,6 +179,28 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
   }
 
   /**
+   * @param $fields
+   * @param $files
+   * @param $self
+   *
+   * @return array
+   */
+  public static function formRule($fields, $files, $self) {
+    $errors = [];
+    if ($fields['total_amount'] < 0) {
+      $errors['total_amount'] = ts('Payment amount cannot negative');
+    }
+    if (CRM_Utils_Money::subtractCurrencies($fields['total_amount'], $self->contributionBalance['balance'], $self->contributionBalance['currency']) > 0) {
+      $errors['total_amount'] = ts('Payment amount cannot be greater than owed amount');
+    }
+    if ($self->_paymentProcessor['id'] === 0 && empty($fields['payment_instrument_id'])) {
+      $errors['payment_instrument_id'] = ts('Payment method is a required field');
+    }
+
+    return $errors;
+  }
+
+  /**
    * Process the form submission.
    */
   public function postProcess() {
@@ -121,11 +210,11 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     // Redirect based on user preference
     $redirectMode = (int) \Civi::settings()->get('userpayment_paymentadd_redirect');
     switch ($redirectMode) {
-      case self::PAYMENT_REDIRECT_THANKYOU:
+      case self::PAYMENTADD_REDIRECT_THANKYOU:
         $url = CRM_Utils_System::url('civicrm/user/payment/thankyou', "coid={$this->getContributionID()}&cid={$this->getContactID()}");
         break;
 
-      case self::PAYMENT_REDIRECT_URL:
+      case self::PAYMENTADD_REDIRECT_URL:
         $url = \Civi::settings()->get('userpayment_paymentadd_redirecturl');
         if (empty(parse_url($url)['host']) && (strpos($url, '/') !== 0)) {
           $url = '/' . $url;

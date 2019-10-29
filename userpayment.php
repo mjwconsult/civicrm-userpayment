@@ -36,6 +36,7 @@ function userpayment_civicrm_install() {
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_postInstall
  */
 function userpayment_civicrm_postInstall() {
+  CRM_Core_Payment_MJWTrait::createPaymentInstrument(['name' => 'Bulk Payment']);
   _userpayment_civix_civicrm_postInstall();
 }
 
@@ -144,8 +145,14 @@ function userpayment_civicrm_buildForm($formName, &$form) {
       $method = new ReflectionMethod('CRM_Admin_Form_Generic', 'getSettingPageFilter');
       $method->setAccessible(true);
       $filter = $method->invoke($form);
-      if ($filter === 'userpayment_paymentadd') {
-        CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, "js/settings_addpayment{$min}.js");
+      switch ($filter) {
+        case 'userpayment_paymentadd':
+          CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, "js/settings_addpayment{$min}.js");
+          break;
+
+        case 'userpayment_paymentbulk':
+          CRM_Core_Resources::singleton()->addScriptFile(E::LONG_NAME, "js/settings_bulkpayment{$min}.js");
+          break;
       }
       break;
   }
@@ -155,7 +162,7 @@ function userpayment_civicrm_buildForm($formName, &$form) {
  * Add navigation for GiftAid under "Administer/CiviContribute" menu
  */
 function userpayment_civicrm_navigationMenu(&$menu) {
-  $item[] =  [
+  $item =  [
     'label' => E::ts('User Payment Forms'),
     'name'       => 'admin_userpayment',
     'url'        => NULL,
@@ -163,8 +170,8 @@ function userpayment_civicrm_navigationMenu(&$menu) {
     'operator'   => NULL,
     'separator'  => NULL,
   ];
-  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute', $item[0]);
-  $item[] =  [
+  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute', $item);
+  $item =  [
     'label' => E::ts('Make Payment'),
     'name'       => 'admin_userpayment_paymentadd',
     'url'        => 'civicrm/admin/setting/userpayment_paymentadd?reset=1',
@@ -172,6 +179,24 @@ function userpayment_civicrm_navigationMenu(&$menu) {
     'operator'   => NULL,
     'separator'  => NULL,
   ];
-  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/admin_userpayment', $item[1]);
+  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/admin_userpayment', $item);
+  $item =  [
+    'label' => E::ts('Bulk Payment'),
+    'name'       => 'admin_userpayment_paymentbulk',
+    'url'        => 'civicrm/admin/setting/userpayment_paymentbulk?reset=1',
+    'permission' => 'administer CiviCRM',
+    'operator'   => NULL,
+    'separator'  => NULL,
+  ];
+  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/admin_userpayment', $item);
+  $item =  [
+    'label' => E::ts('Bulk Payment Invoice'),
+    'name'       => 'admin_userpayment_paymentbulkinvoice',
+    'url'        => 'civicrm/admin/setting/userpayment_paymentbulkinvoice?reset=1',
+    'permission' => 'administer CiviCRM',
+    'operator'   => NULL,
+    'separator'  => NULL,
+  ];
+  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/admin_userpayment', $item);
   _userpayment_civix_navigationMenu($menu);
 }
