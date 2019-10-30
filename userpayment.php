@@ -37,6 +37,25 @@ function userpayment_civicrm_install() {
  */
 function userpayment_civicrm_postInstall() {
   CRM_Core_Payment_MJWTrait::createPaymentInstrument(['name' => 'Bulk Payment']);
+
+  // Create and set "Bulk Payment" financial type as default
+  $financialTypeParams = [
+    'name' => "Bulk Payment",
+  ];
+  try {
+    $financialType = civicrm_api3('FinancialType', 'getsingle', $financialTypeParams);
+    $financialTypeParams['id'] = $financialType['id'];
+  }
+  catch (Exception $e) {
+    // Do nothing
+  }
+
+  $financialTypeParams['description'] = "For payments made via the bulk contributions method";
+  $financialTypeParams['is_active'] = 1;
+  $financialTypeParams['is_reserved'] = 1;
+  $financialType = civicrm_api3('FinancialType', 'create', $financialTypeParams);
+  \Civi::settings()->set('userpayment_bulkfinancialtype', $financialType['id']);
+
   _userpayment_civix_civicrm_postInstall();
 }
 
@@ -172,6 +191,15 @@ function userpayment_civicrm_navigationMenu(&$menu) {
   ];
   _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute', $item);
   $item =  [
+    'label' => E::ts('General Settings'),
+    'name'       => 'admin_userpayment_general',
+    'url'        => 'civicrm/admin/setting/userpayment_general?reset=1',
+    'permission' => 'administer CiviCRM',
+    'operator'   => NULL,
+    'separator'  => NULL,
+  ];
+  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/admin_userpayment', $item);
+  $item =  [
     'label' => E::ts('Make Payment'),
     'name'       => 'admin_userpayment_paymentadd',
     'url'        => 'civicrm/admin/setting/userpayment_paymentadd?reset=1',
@@ -193,6 +221,15 @@ function userpayment_civicrm_navigationMenu(&$menu) {
     'label' => E::ts('Bulk Payment Invoice'),
     'name'       => 'admin_userpayment_paymentbulkinvoice',
     'url'        => 'civicrm/admin/setting/userpayment_paymentbulkinvoice?reset=1',
+    'permission' => 'administer CiviCRM',
+    'operator'   => NULL,
+    'separator'  => NULL,
+  ];
+  _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/admin_userpayment', $item);
+  $item =  [
+    'label' => E::ts('Collect Payments'),
+    'name'       => 'admin_userpayment_paymentbulkinvoice',
+    'url'        => 'civicrm/admin/setting/userpayment_paymentcollect?reset=1',
     'permission' => 'administer CiviCRM',
     'operator'   => NULL,
     'separator'  => NULL,

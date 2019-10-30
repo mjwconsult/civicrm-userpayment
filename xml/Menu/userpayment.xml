@@ -1,6 +1,12 @@
 <?xml version="1.0"?>
 <menu>
   <item>
+    <path>civicrm/admin/setting/userpayment_general</path>
+    <title>General Settings</title>
+    <page_callback>CRM_Admin_Form_Generic</page_callback>
+    <access_arguments>administer CiviCRM</access_arguments>
+  </item>
+  <item>
     <path>civicrm/admin/setting/userpayment_paymentadd</path>
     <title>Make Payment Settings</title>
     <page_callback>CRM_Admin_Form_Generic</page_callback>
@@ -63,5 +69,19 @@
     <is_public>true</is_public>
     <access_callback>1</access_callback>
   </item>
+
+  <item>
+    <path>civicrm/ajax/collectpayments</path>
+    <page_callback>CRM_Userpayment_AJAX::getBulkContributions</page_callback>
+  </item>
+  <item>
+    <path>civicrm/ajax/collectpayments/remove</path>
+    <page_callback>CRM_Userpayment_AJAX::removeBulkContribution</page_callback>
+  </item>
+  <item>
+    <path>civicrm/ajax/collectpayments/add</path>
+    <page_callback>CRM_Userpayment_AJAX::addBulkContribution</page_callback>
+  </item>
+
 </menu>
 

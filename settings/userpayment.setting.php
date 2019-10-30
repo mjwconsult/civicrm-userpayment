@@ -3,6 +3,20 @@
 use CRM_Userpayment_ExtensionUtil as E;
 
 return [
+  'userpayment_bulkfinancialtype' => [
+    'name' => 'userpayment_bulkfinancialtype',
+    'type' => 'Integer',
+    'quick_form_type' => 'Select',
+    'default' => 10,
+    'add' => '5.13',
+    'title' => ts('Financial Type for bulk payments'),
+    'html_type' => 'select',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'description' => ts('Specify the financial type for the bulk payments'),
+    'pseudoconstant' => ['callback' => 'CRM_Contribute_PseudoConstant::financialType'],
+    'settings_pages' => ['userpayment_general' => ['weight' => 1]],
+  ],
   'userpayment_paymentadd_title' => [
     'name' => 'userpayment_paymentadd_title',
     'type' => 'Text',
@@ -143,7 +157,6 @@ return [
       ]
     ],
   ],
-
 
   'userpayment_paymentbulk_title' => [
     'name' => 'userpayment_paymentbulk_title',
@@ -312,6 +325,62 @@ return [
     'settings_pages' => [
       'userpayment_paymentbulkinvoice' => [
         'weight' => 5,
+      ]
+    ],
+  ],
+
+  'userpayment_paymentcollect_title' => [
+    'name' => 'userpayment_paymentcollect_title',
+    'type' => 'Text',
+    'html_type' => 'text',
+    'default' => E::ts('Collect Payments'),
+    'add' => '5.13',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'title' => E::ts('Page Title'),
+    'description' => E::ts('Default page title for the collet payments page'),
+    'html_attributes' => [],
+    'settings_pages' => [
+      'userpayment_paymentcollect' => [
+        'weight' => 0,
+      ]
+    ],
+  ],
+  'userpayment_paymentcollect_introduction' => [
+    'name' => 'userpayment_paymentcollect_introduction',
+    'type' => 'wysiwyg',
+    'html_type' => 'textarea',
+    'default' => E::ts('Please add the contribution IDs that you want to pay for'),
+    'add' => '5.13',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'title' => E::ts('Introduction'),
+    'description' => E::ts('Introduction text for the page'),
+    'html_attributes' => [
+      'cols' => 60,
+      'rows' => 5,
+      'class' => 'crm-form-wysiwyg'
+    ],
+    'settings_pages' => [
+      'userpayment_paymentcollect' => [
+        'weight' => 5,
+      ]
+    ],
+  ],
+  'userpayment_paymentcollect_redirecturl' => [
+    'name' => 'userpayment_paymentcollect_redirecturl',
+    'type' => 'String',
+    'html_type' => 'text',
+    'default' => 'civicrm/user/payment/bulk',
+    'add' => '5.13',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'title' => E::ts('Redirect URL'),
+    'description' => E::ts('The URL to redirect to on successful submission - default (civicrm/user/payment/bulk), contributionID (coid), + contactID (cid) will be appended as parameters'),
+    'html_attributes' => ['size' => 80],
+    'settings_pages' => [
+      'userpayment_paymentcollect' => [
+        'weight' => 25,
       ]
     ],
   ],

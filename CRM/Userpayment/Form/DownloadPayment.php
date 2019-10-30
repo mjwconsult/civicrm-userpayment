@@ -95,27 +95,13 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
         'contribution_id' => $contributionDetail['id'],
         'name' => $contactDisplayName,
         'amount' => CRM_Utils_Money::formatLocaleNumericRoundedByCurrency($contributionDetail['total_amount'], $contributionDetail['currency']),
-        'description' => $this->getContributionDescription($contributionDetail),
+        'description' => CRM_Userpayment_BulkContributions::getContributionDescription($contributionDetail),
       ];
       $rows[] = $row;
     }
     $headers = ['ID', 'Name', 'Amount', 'Description'];
     $this->assign('headers', $headers);
     $this->assign('rows', $rows);
-  }
-
-  private function getContributionDescription($contribution) {
-    if (!empty($contribution['source'])) {
-      return $contribution['source'];
-    }
-    $participantPayments = civicrm_api3('ParticipantPayment', 'get', [
-      'return' => ["participant_id.event_id.title"],
-      'contribution_id' => $contribution['id'],
-    ]);
-    if (!empty($participantPayments['values'])) {
-      return CRM_Utils_Array::first($participantPayments['values'])["participant_id.event_id.title"];
-    }
-    return 'Contribution';
   }
 
   /**

@@ -88,7 +88,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
       ],
     ]);
 
-    $this->addFormRule(['CRM_Userpayment_Form_AddPayment', 'formRule'], $this);
+    $this->addFormRule(['CRM_Userpayment_Form_AddPayment', 'formRule']);
   }
 
   /**

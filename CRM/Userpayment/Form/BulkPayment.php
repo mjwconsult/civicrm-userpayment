@@ -163,7 +163,7 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
       'return' => 'check_number',
       'id' => $this->getContributionID(),
     ]);
-    $bulkIdentifier = substr($bulkIdentifier, 5);
+    $bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($bulkIdentifier);
 
     // Get all contributions with a "check_number" matching the one specified on the form
     $contributions = civicrm_api3('Contribution', 'get', [
