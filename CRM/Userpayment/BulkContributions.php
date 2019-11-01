@@ -138,6 +138,17 @@ class CRM_Userpayment_BulkContributions {
         }
         return trim($initials);
     }
+  }
 
+  /**
+   * Format and return an invoice reference based on contribution ID and bulk identifier
+   *
+   * @param int $contributionID
+   * @param string $bulkIdentifier
+   *
+   * @return string
+   */
+  public static function getInvoiceReference($contributionID, $bulkIdentifier) {
+    return "{$contributionID}_{$bulkIdentifier}";
   }
 }

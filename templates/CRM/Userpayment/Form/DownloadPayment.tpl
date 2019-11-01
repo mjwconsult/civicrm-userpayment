@@ -8,6 +8,10 @@
     {/if}
 
   <div class="crm-section crm-payment-form-block-amount">
+    <fieldset id="invoice_reference">
+      <div class="label">{ts}Invoice Reference{/ts}</div>
+      <div class="content">{$invoiceReference}</div>
+    </fieldset>
     <fieldset id="amount">
       <div class="label">{$form.total_amount.label}</div>
       <div class="content">
