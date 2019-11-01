@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * https://civicrm.org/licensing
  */
 
@@ -8,6 +8,7 @@
  */
 class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayment {
 
+  // IDs for type of redirection
   const PAYMENT_REDIRECT_THANKYOU = 0;
   const PAYMENT_REDIRECT_URL = 1;
 

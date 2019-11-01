@@ -1,7 +1,20 @@
 <?php
+/**
+ * https://civicrm.org/licensing
+ */
 
+/**
+ * The class that handles all the AJAX callbacks for CRM_Userpayment
+ * Class CRM_Userpayment_AJAX
+ */
 class CRM_Userpayment_AJAX {
 
+  /**
+   * Get a datatable formatted list of all bulk contributions for a specific identifier
+   *
+   * @throws \CRM_Core_Exception
+   * @throws \CiviCRM_API3_Exception
+   */
   public static function getBulkContributions() {
     $requiredParameters = [
       'cnum' => 'String',
@@ -20,6 +33,10 @@ class CRM_Userpayment_AJAX {
     CRM_Utils_JSON::output($datatableDT);
   }
 
+  /**
+   * Remove a bulk contribution from a collection of contributions
+   * @throws \CiviCRM_API3_Exception
+   */
   public static function removeBulkContribution() {
     $requiredParameters = [
       'coid' => 'Positive',
@@ -33,6 +50,10 @@ class CRM_Userpayment_AJAX {
     ]);
   }
 
+  /**
+   * Add a bulk contribution to a collection of contributions
+   * @throws \CiviCRM_API3_Exception
+   */
   public static function addBulkContribution() {
     $requiredParameters = [
       'coid' => 'Positive',
@@ -64,7 +85,7 @@ class CRM_Userpayment_AJAX {
       CRM_Utils_System::civiExit(1);
     }
 
-    $contribution = civicrm_api3('Contribution', 'setvalue', [
+    civicrm_api3('Contribution', 'setvalue', [
       'field' => 'check_number',
       'id' => $params['coid'],
       'value' => $params['cnum'],

@@ -1,25 +1,51 @@
 <?php
+/**
+ * https://civicrm.org/licensing
+ */
 
+/**
+ * Generic helper class for CRM_Userpayment
+ * Class CRM_Userpayment_BulkContributions
+ */
 class CRM_Userpayment_BulkContributions {
 
+  // The prefix appended to check_number on the "master" contribution
   const MASTER_PREFIX="BULK_";
 
+  // The various supported name formats
   const PAYMENT_NAMEFORMAT_FULL = 0;
   const PAYMENT_NAMEFORMAT_INITIALS = 1;
 
+  /**
+   * Return the identifier for the master contribution when given the identifier for the bulk contributions
+   * @param string $identifier
+   *
+   * @return string
+   */
   public static function getMasterIdentifier($identifier) {
     if (strcmp($identifier, self::MASTER_PREFIX . $identifier) === 0) {
       return $identifier;
     }
-    return "BULK_{$identifier}";
+    return self::MASTER_PREFIX . "_{$identifier}";
   }
 
+  /**
+   * Return the identifier for the bulk contributions when given the identifier of the master contribution
+   * @param string $identifier
+   *
+   * @return bool|string
+   */
   public static function getBulkIdentifierFromMaster($identifier) {
     return substr($identifier, 5);
   }
 
   /**
-   * @param $params
+   * Get an array of the bulk contributions
+   * @param array $params
+   *
+   * @return array
+   * @throws \CRM_Core_Exception
+   * @throws \CiviCRM_API3_Exception
    */
   public static function getBulkContributions($params) {
     if (empty($params['cnum'])) {
@@ -62,6 +88,13 @@ class CRM_Userpayment_BulkContributions {
     return $rows;
   }
 
+  /**
+   * Return a suitable description for a contribution to be displayed on lists
+   * @param array $contribution
+   *
+   * @return mixed|string
+   * @throws \CiviCRM_API3_Exception
+   */
   public static function getContributionDescription($contribution) {
     if (!empty($contribution['source'])) {
       return $contribution['source'];
@@ -76,6 +109,13 @@ class CRM_Userpayment_BulkContributions {
     return 'Contribution';
   }
 
+  /**
+   * Return a formatted displayname for contactID based on userpayment_nameformat setting
+   * @param int $contactID
+   *
+   * @return array|string
+   * @throws \CiviCRM_API3_Exception
+   */
   public static function getFormattedDisplayName($contactID) {
     switch ((int)\Civi::settings()->get('userpayment_nameformat')) {
       case CRM_Userpayment_BulkContributions::PAYMENT_NAMEFORMAT_FULL:

@@ -3,6 +3,9 @@
  * https://civicrm.org.licensing
  */
 
+/**
+ * Class CRM_Userpayment_Page_Thankyou
+ */
 class CRM_Userpayment_Page_Thankyou extends CRM_Core_Page {
 
   public function run() {
