@@ -39,6 +39,14 @@
           var selectorClass = '.collectpayment-selector';
           var bulkIdentifier = $('span#bulk-identifier').text();
 
+          $('#CollectPayments').on('keyup keypress', function(e) {
+            var keyCode = e.keyCode || e.which;
+            if (keyCode === 13) {
+              e.preventDefault();
+              return false;
+            }
+          });
+
           CRM.$('table' + selectorClass).data({
             "ajax": {
               "url": {/literal}'{crmURL p="civicrm/ajax/collectpayments" h=0 q="snippet=4"}'{literal},
