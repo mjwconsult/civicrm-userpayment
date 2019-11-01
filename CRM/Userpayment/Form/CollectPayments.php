@@ -41,7 +41,7 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
     $this->addButtons([
       [
         'type' => 'upload',
-        'name' => ts('%1', [1 => ts('Submit')]),
+        'name' => ts('%1', [1 => ts('Next')]),
         'isDefault' => TRUE,
       ],
       [
