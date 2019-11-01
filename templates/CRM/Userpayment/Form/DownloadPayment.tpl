@@ -8,15 +8,14 @@
     {/if}
 
   <div class="crm-section crm-payment-form-block-amount">
-    <fieldset id="invoice_reference">
-      <div class="label">{ts}Invoice Reference{/ts}</div>
-      <div class="content">{$invoiceReference}</div>
-    </fieldset>
-    <fieldset id="amount">
-      <div class="label">{$form.total_amount.label}</div>
-      <div class="content">
-        <span id='totalAmount'>{$form.currency.html|crmAddClass:eight}&nbsp;{$form.total_amount.html|crmAddClass:eight}</span>
-        &nbsp; <span class="status">{ts}Balance Owed{/ts}: {$contributionBalance.balance|crmMoney:$contributionBalance.currency}</span>
+    <fieldset id="invoice-summary">
+      <div class="crm-public-form-item crm-section invoice-reference-section">
+        <div class="label">{ts}Invoice Reference{/ts}</div>
+        <div class="content">{$invoiceReference}</div>
+      </div>
+      <div class="crm-public-form-item crm-section invoice-reference-section">
+        <div class="label">{$form.total_amount.label}</div>
+        <div class="content">{$contributionBalance.total|crmMoney:$contributionBalance.currency}</div>
       </div>
     </fieldset>
   </div>

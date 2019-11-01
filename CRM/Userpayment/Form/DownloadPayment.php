@@ -45,8 +45,8 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
 
     $contributionBalance = civicrm_api3('Contribution', 'getbalance', [
       'id' => $this->getContributionID(),
-    ]);
-    $this->setContributionBalance($contributionBalance['values']);
+    ])['values'];
+    $this->setContributionBalance($contributionBalance);
 
     $this->assign('contactId', $this->getContactID());
     $this->assign('contributionBalance', $this->getContributionBalance());
