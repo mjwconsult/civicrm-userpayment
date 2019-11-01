@@ -6,17 +6,35 @@ return [
   'userpayment_bulkfinancialtype' => [
     'name' => 'userpayment_bulkfinancialtype',
     'type' => 'Integer',
-    'quick_form_type' => 'Select',
-    'default' => 10,
+    'html_type' => 'select',
+    'default' => 1,
     'add' => '5.13',
     'title' => ts('Financial Type for bulk payments'),
-    'html_type' => 'select',
     'is_domain' => 1,
     'is_contact' => 0,
     'description' => ts('Specify the financial type for the bulk payments'),
     'pseudoconstant' => ['callback' => 'CRM_Contribute_PseudoConstant::financialType'],
+    'html_attributes' => [],
     'settings_pages' => ['userpayment_general' => ['weight' => 1]],
   ],
+  'userpayment_nameformat' => [
+    'name' => 'userpayment_nameformat',
+    'type' => 'Integer',
+    'html_type' => 'select',
+    'default' => 0,
+    'add' => '5.13',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'title' => E::ts('Name format'),
+    'description' => E::ts('How should the names be displayed on Collect Payments / Download Invoice?'),
+    'options' => [
+      CRM_Userpayment_BulkContributions::PAYMENT_NAMEFORMAT_FULL => E::ts('Full name per display name format (eg. Joe Bloggs)'),
+      CRM_Userpayment_BulkContributions::PAYMENT_NAMEFORMAT_INITIALS => E::ts('Initials (eg. for Joe Bloggs = "J B")')
+    ],
+    'html_attributes' => [],
+    'settings_pages' => ['userpayment_general' => ['weight' => 20]],
+  ],
+
   'userpayment_paymentadd_title' => [
     'name' => 'userpayment_paymentadd_title',
     'type' => 'Text',

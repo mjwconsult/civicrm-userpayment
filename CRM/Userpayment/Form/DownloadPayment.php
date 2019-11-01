@@ -87,10 +87,7 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
     ]);
 
     foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
-      $contactDisplayName = civicrm_api3('Contact', 'getvalue', [
-        'return' => "display_name",
-        'id' => $contributionDetail['contact_id'],
-      ]);
+      $contactDisplayName = CRM_Userpayment_BulkContributions::getFormattedDisplayName($contributionDetail['contact_id']);
       $row = [
         'contribution_id' => $contributionDetail['id'],
         'name' => $contactDisplayName,

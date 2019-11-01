@@ -4,6 +4,9 @@ class CRM_Userpayment_BulkContributions {
 
   const MASTER_PREFIX="BULK_";
 
+  const PAYMENT_NAMEFORMAT_FULL = 0;
+  const PAYMENT_NAMEFORMAT_INITIALS = 1;
+
   public static function getMasterIdentifier($identifier) {
     if (strcmp($identifier, self::MASTER_PREFIX . $identifier) === 0) {
       return $identifier;
@@ -31,10 +34,7 @@ class CRM_Userpayment_BulkContributions {
 
     $sum = 0;
     foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
-      $contactDisplayName = civicrm_api3('Contact', 'getvalue', [
-        'return' => "display_name",
-        'id' => $contributionDetail['contact_id'],
-      ]);
+      $contactDisplayName = CRM_Userpayment_BulkContributions::getFormattedDisplayName($contributionDetail['contact_id']);
       $row = [
         'DT_RowId' => $contributionDetail['id'],
         'DT_RowAttr' => ['data-entity' => 'contribution', 'data-id' => $contributionDetail['id']],
@@ -74,5 +74,30 @@ class CRM_Userpayment_BulkContributions {
       return CRM_Utils_Array::first($participantPayments['values'])["participant_id.event_id.title"];
     }
     return 'Contribution';
+  }
+
+  public static function getFormattedDisplayName($contactID) {
+    switch ((int)\Civi::settings()->get('userpayment_nameformat')) {
+      case CRM_Userpayment_BulkContributions::PAYMENT_NAMEFORMAT_FULL:
+        return civicrm_api3('Contact', 'getvalue', [
+          'return' => "display_name",
+          'id' => $contactID,
+        ]);
+
+      case CRM_Userpayment_BulkContributions::PAYMENT_NAMEFORMAT_INITIALS:
+        $initialsFields = ['first_name', 'middle_name', 'last_name'];
+        $contactDetails = civicrm_api3('Contact', 'getsingle', [
+          'return' => ['first_name', 'middle_name', 'last_name'],
+          'id' => $contactID,
+        ]);
+        $initials = '';
+        foreach ($initialsFields as $field) {
+          if (!empty($contactDetails[$field])) {
+            $initials .= $contactDetails[$field][0] . ' ';
+          }
+        }
+        return trim($initials);
+    }
+
   }
 }
