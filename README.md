@@ -19,9 +19,10 @@ See: https://docs.civicrm.org/sysadmin/en/latest/customize/extensions/#installin
 
 ### General Settings
 
-Select the financial type to use for bulk payments (default is Bulk Payment). This can be used later to filter these payments out of reports etc.
+Configure via *Administer->CiviContribute->User Payment Forms->General Settings*
 
-* Configure via *Administer->CiviContribute->User Payment Forms->General Settings*
+* Select the financial type to use for bulk payments (default is Bulk Payment). This can be used later to filter these payments out of reports etc.
+* Select the format for display contact names on bulk contribution lists (ie. display name or initials).
 
 ### Make Payment Form
 This allows a user to make a payment on an existing contribution if they have permission and the correct URL.
@@ -62,7 +63,9 @@ This displays an "invoice" on screen which the user can save/print and use later
 
 * Configure via *Administer->CiviContribute->User Payment Forms->Bulk Payment Invoice*
 * Example URL: http://localhost:8000/civicrm/user/payment/bulkinvoice?coid=583&cid=202&reset=1
+  * Pass one of coid **OR** id, not both!
   * coid = Contribution ID
+  * id = the (unique) identifier for the collection of bulk payments (could be a timestamp for example).
   * cid = Contact ID
   * cs = Checksum (Optional if you don't want the user to need to login first).
 
