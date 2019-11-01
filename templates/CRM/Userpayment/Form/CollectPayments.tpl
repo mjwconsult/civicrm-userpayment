@@ -53,6 +53,13 @@
               "data": function (d) {
                 d.cnum = bulkIdentifier
               }
+            },
+            "drawCallback": function(settings) {
+              var count = 0;
+              if (settings.aoData.length > 0) {
+                count = settings.aoData.length - 1;
+              }
+              CRM.$('#DataTables_Table_0_info').text('Number of payments selected: ' + count);
             }
 
           });
