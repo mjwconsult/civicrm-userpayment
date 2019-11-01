@@ -25,6 +25,12 @@
     <access_arguments>administer CiviCRM</access_arguments>
   </item>
   <item>
+    <path>civicrm/admin/setting/userpayment_paymentcollect</path>
+    <title>Collect Payments Settings</title>
+    <page_callback>CRM_Admin_Form_Generic</page_callback>
+    <access_arguments>administer CiviCRM</access_arguments>
+  </item>
+  <item>
     <path>civicrm/user/payment/add</path>
     <title>Add Payment</title>
     <path_arguments>reset=1</path_arguments>
