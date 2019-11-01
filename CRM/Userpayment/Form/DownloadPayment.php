@@ -9,6 +9,19 @@
  */
 class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment {
 
+  public function getContributionID() {
+    $bulkIdentifier = CRM_Utils_Request::retrieveValue('id', 'String');
+    if (!empty($bulkIdentifier)) {
+      try {
+        $this->contributionID = civicrm_api3('Contribution', 'getvalue', ['return' => 'id', 'check_number' => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier)]);
+      }
+      catch (Exception $e) {
+        // Not found. Continue and see if we can get the contribution ID another way.
+      }
+    }
+    return parent::getContributionID();
+  }
+
   /**
    * Pre process form.
    *
@@ -17,13 +30,13 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
    */
   public function preProcess() {
     $this->getContactID();
-    $this->getContributionID();
 
     // We can access this if the contact has edit permissions and provided a valid checksum
     if (!CRM_Contact_BAO_Contact_Permission::validateChecksumContact($this->getContactID(), $this)) {
       throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
     }
 
+    $this->getContributionID();
     $this->setMode();
 
     parent::preProcess();
