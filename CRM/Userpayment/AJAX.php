@@ -40,17 +40,25 @@ class CRM_Userpayment_AJAX {
     ];
     $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
 
-    $existingCheckNumber = civicrm_api3('Contribution', 'getvalue', [
-      'return' => 'check_number',
+    $existingContribution = civicrm_api3('Contribution', 'getsingle', [
+      'return' => ['check_number', 'contribution_status_id'],
       'id' => $params['coid'],
     ]);
 
-    if ($existingCheckNumber === $params['cnum']) {
+    // Don't add a second time
+    if ($existingContribution['check_number'] === $params['cnum']) {
       CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
       echo json_encode(['message' => "You have already added {$params['coid']} to this bulk payment!"]);
       CRM_Utils_System::civiExit(1);
     }
-    if (!empty($existingCheckNumber)) {
+    // Only allow adding pending contributions
+    if ((int)$existingContribution['contribution_status_id'] !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
+      CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
+      echo json_encode(['message' => "This ID is not Pending payment"]);
+      CRM_Utils_System::civiExit(1);
+    }
+    // Don't add if it's already added to another bulk contribution
+    if (!empty($existingContribution['check_number'])) {
       CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
       echo json_encode(['message' => 'This ID is already assigned to another bulk payment']);
       CRM_Utils_System::civiExit(1);
