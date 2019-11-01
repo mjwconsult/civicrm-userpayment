@@ -54,7 +54,7 @@ class CRM_Userpayment_AJAX {
     // Only allow adding pending contributions
     if ((int)$existingContribution['contribution_status_id'] !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
       CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
-      echo json_encode(['message' => "This ID is not Pending payment"]);
+      echo json_encode(['message' => "Cannot add {$params['coid']} because it is not pending payment"]);
       CRM_Utils_System::civiExit(1);
     }
     // Don't add if it's already added to another bulk contribution

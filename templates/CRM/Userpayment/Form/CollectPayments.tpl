@@ -37,7 +37,6 @@
       <script type="text/javascript">
         (function($) {
           var selectorClass = '.collectpayment-selector';
-          var filterClass = 'abc';
           var bulkIdentifier = $('span#bulk-identifier').text();
 
           CRM.$('table' + selectorClass).data({
@@ -47,6 +46,7 @@
                 d.cnum = bulkIdentifier
               }
             }
+
           });
 
           var collectPayments = {
@@ -91,13 +91,6 @@
             }
           };
           window.collectPayments = collectPayments;
-
-          $(function($) {
-            $(filterClass + ' :input').change(function() {
-              CRM.$('table' + selectorClass).DataTable().draw();
-            });
-
-          });
         })(CRM.$);
       </script>
     {/literal}
