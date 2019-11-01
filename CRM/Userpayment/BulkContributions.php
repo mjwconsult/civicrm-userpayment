@@ -26,7 +26,7 @@ class CRM_Userpayment_BulkContributions {
     if (strcmp($identifier, self::MASTER_PREFIX . $identifier) === 0) {
       return $identifier;
     }
-    return self::MASTER_PREFIX . "_{$identifier}";
+    return self::MASTER_PREFIX . "{$identifier}";
   }
 
   /**
