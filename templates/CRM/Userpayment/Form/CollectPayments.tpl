@@ -12,7 +12,7 @@
     </div>
   {$form.id.html}
     <div class="section-add-contribution">
-    <label for="add-contribution-id">Enter Contribution ID:</label> <input type="text" id="add-contribution-id" />
+    <label for="add-contribution-id">Add Payment Number:</label> <input type="text" id="add-contribution-id" />
       <input type="button" value="Add" id="btn-add-contribution" onclick="window.collectPayments.add()"/>
     </div>
     {strip}
