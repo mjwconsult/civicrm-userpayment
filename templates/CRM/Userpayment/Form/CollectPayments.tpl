@@ -1,8 +1,6 @@
 {* https://civicrm.org/licensing *}
 
 <div class="crm-block crm-form-block crm-payment-form-block">
-
-  <h3>Hello {$displayName}</h3>
     {if $introduction}
       <div class="section-description">{$introduction}</div>
     {/if}
