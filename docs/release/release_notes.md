@@ -8,6 +8,11 @@ Where:
 * minor: Breaking change in some circumstances, or a new feature. Read carefully and make sure you understand the impact of the change.
 * incremental: A "safe" change / improvement. Should *always* be safe to upgrade.
 
+## Release 0.5
+
+* Remove 'Done' button from invoice
+* Remove 'Hello' from Collect payments
+
 ## Release 0.4
 
 * Change how payment amount is displayed on invoice
