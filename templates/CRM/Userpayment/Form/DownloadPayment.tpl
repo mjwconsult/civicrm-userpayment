@@ -38,10 +38,6 @@
       </table>
     {/strip}
 
-  <div id="payment-processor">
-    <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
-  </div>
-
 </div>
 
 {literal}

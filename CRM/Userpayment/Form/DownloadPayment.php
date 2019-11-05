@@ -73,13 +73,6 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
     $this->addField('trxn_date', ['entity' => 'FinancialTrxn', 'label' => ts('Date Received'), 'context' => 'Contribution'], FALSE, FALSE);
     $this->add('hidden', 'coid');
 
-    $this->addButtons([
-      [
-        'type' => 'cancel',
-        'name' => ts('Done'),
-      ],
-    ]);
-
     // Add data about the linked contributions
     if (empty($this->getContributionID())) {
       Civi::log()->debug('No contribution ID');
