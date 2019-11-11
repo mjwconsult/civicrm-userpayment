@@ -56,6 +56,8 @@ on an existing contribution if they have permission and the correct URL.
   * coid = Contribution ID
   * cid = Contact ID
   * cs = Checksum (Optional if you don't want the user to need to login first).
+  
+If a contribution linked to a bulk contribution is paid individually it will be removed from the bulk contribution.
 
 ### Bulk Invoice Form
 

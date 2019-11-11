@@ -237,3 +237,59 @@ function userpayment_civicrm_navigationMenu(&$menu) {
   _userpayment_civix_insert_navigation_menu($menu, 'Administer/CiviContribute/admin_userpayment', $item);
   _userpayment_civix_navigationMenu($menu);
 }
+
+function userpayment_civicrm_post($op, $objectName, $objectId, &$objectRef) {
+  if ($objectName !== 'Contribution') {
+    return;
+  }
+
+  if (CRM_Core_Transaction::isActive()) {
+    CRM_Core_Transaction::addCallback(CRM_Core_Transaction::PHASE_POST_COMMIT, 'userpayment_callback_removebulkcontribution', [$objectRef]);
+  }
+  else {
+    userpayment_callback_removebulkcontribution($objectRef);
+  }
+}
+
+function userpayment_callback_removebulkcontribution($objectRef) {
+  if (isset(Civi::$statics[E::LONG_NAME]['removebulkcontribution'])) {
+    return;
+  }
+  Civi::$statics[E::LONG_NAME]['removebulkcontribution'] = TRUE;
+
+  // This checks if a contribution has been paid and is part of a bulk contribution
+  // If so, the bulk contribution is reduced by that amount and the link (check_number) removed
+  if (empty($objectRef->check_number)) {
+    return;
+  }
+  $bob = $objectRef->contribution_status_id;
+  $bob2 = CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed');
+  $bob3 = ($bob !== $bob2);
+  if ((int)$objectRef->contribution_status_id !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
+    return;
+  }
+
+  // We have a completed contribution with a check_number - does it have a corresponding bulk contribution?
+  try {
+    $masterContribution = civicrm_api3('Contribution', 'getsingle', ['check_number' => CRM_Userpayment_BulkContributions::getMasterIdentifier($objectRef->check_number)]);
+
+    if (empty($objectRef->total_amount)) {
+      return;
+    }
+    // If the master contribution is completed don't touch
+    if ((int)$masterContribution['contribution_status_id'] === (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
+      return;
+    }
+
+    // Reduce the bulk contribution by the amount that's been paid. Remove the check_number from the linked contribution.
+    $masterContribution['total_amount'] = $masterContribution['total_amount'] - (float) $objectRef->total_amount;
+    $transaction = new CRM_Core_Transaction();
+    civicrm_api3('Contribution', 'create', ['id' => $masterContribution['id'], 'total_amount' => $masterContribution['total_amount']]);
+    civicrm_api3('Contribution', 'create', ['id' => $objectRef->id, 'check_number' => '']);
+    $transaction->commit();
+  }
+  catch (Exception $e) {
+    // We've either not found one or there is more than one. Don't handle it.
+    return;
+  }
+}
