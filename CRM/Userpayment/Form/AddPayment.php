@@ -72,6 +72,9 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->assign('component', $this->_component);
     $this->assign('email', $this->_contributorEmail);
 
+    // required by processBillingAddress. Otherwise it creates a duplicate contact
+    $this->_contributorContactID = $this->getContactID();
+
     if (\Civi::settings()->get('userpayment_paymentadd_captcha')) {
       CRM_Utils_ReCAPTCHA::enableCaptchaOnForm($this);
     }
