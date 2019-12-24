@@ -9,12 +9,26 @@
  */
 class CRM_Userpayment_BulkContributions {
 
-  // The prefix appended to check_number on the "master" contribution
+  // The prefix appended to bulk identifier on the "master" contribution
   const MASTER_PREFIX="BULK_";
 
   // The various supported name formats
   const PAYMENT_NAMEFORMAT_FULL = 0;
   const PAYMENT_NAMEFORMAT_INITIALS = 1;
+
+  // Custom data identifiers
+  const CUSTOMGROUP="bulk_payments";
+  const CUSTOMFIELD_IDENTIFIER="identifier";
+
+  /**
+   * Return the custom field name for use in api3 calls
+   *
+   * @return mixed
+   * @throws \CiviCRM_API3_Exception
+   */
+  public static function getIdentifierFieldName() {
+    return CRM_Userpayment_Utils::getCustomByName(self::CUSTOMFIELD_IDENTIFIER, self::CUSTOMGROUP);
+  }
 
   /**
    * Return the identifier for the master contribution when given the identifier for the bulk contributions
@@ -52,10 +66,10 @@ class CRM_Userpayment_BulkContributions {
       throw new CRM_Core_Exception('Missing required parameter cnum');
     }
 
-    // Get all contributions with a "check_number" matching the one specified on the form
+    // Get all contributions with a bulk identifier matching the one specified on the form
     $contributions = civicrm_api3('Contribution', 'get', [
       'return' => ['id', 'contact_id', 'total_amount', 'source', 'currency'],
-      'check_number' => $params['cnum'],
+      self::getIdentifierFieldName() => $params['cnum'],
     ]);
 
     $sum = 0;
@@ -151,4 +165,5 @@ class CRM_Userpayment_BulkContributions {
   public static function getInvoiceReference($contributionID, $bulkIdentifier) {
     return "{$contributionID}_{$bulkIdentifier}";
   }
+
 }

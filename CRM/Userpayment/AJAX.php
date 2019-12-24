@@ -44,7 +44,7 @@ class CRM_Userpayment_AJAX {
     $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
 
     $contribution = civicrm_api3('Contribution', 'setvalue', [
-      'field' => 'check_number',
+      'field' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
       'id' => $params['coid'],
       'value' => NULL,
     ]);
@@ -62,12 +62,12 @@ class CRM_Userpayment_AJAX {
     $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
 
     $existingContribution = civicrm_api3('Contribution', 'getsingle', [
-      'return' => ['check_number', 'contribution_status_id'],
+      'return' => [CRM_Userpayment_BulkContributions::getIdentifierFieldName(), 'contribution_status_id'],
       'id' => $params['coid'],
     ]);
 
     // Don't add a second time
-    if ($existingContribution['check_number'] === $params['cnum']) {
+    if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()] === $params['cnum']) {
       CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
       echo json_encode(['message' => "You have already added {$params['coid']} to this bulk payment!"]);
       CRM_Utils_System::civiExit(1);
@@ -79,14 +79,14 @@ class CRM_Userpayment_AJAX {
       CRM_Utils_System::civiExit(1);
     }
     // Don't add if it's already added to another bulk contribution
-    if (!empty($existingContribution['check_number'])) {
+    if (!empty($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()])) {
       CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
       echo json_encode(['message' => 'This ID is already assigned to another bulk payment']);
       CRM_Utils_System::civiExit(1);
     }
 
     civicrm_api3('Contribution', 'setvalue', [
-      'field' => 'check_number',
+      'field' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
       'id' => $params['coid'],
       'value' => $params['cnum'],
     ]);

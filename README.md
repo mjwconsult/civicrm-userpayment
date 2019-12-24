@@ -35,7 +35,7 @@ This allows a user to make a payment on an existing contribution if they have pe
 
 ### Collect Payment Form
 
-This form allows you to select / add contributions by their ID. They will be linked to a "master" contribution which 
+This form allows you to select / add contributions by their ID. They will be linked to a "master" contribution which
 can be used to make payment via the *Bulk Payment Form* or the *Bulk Invoice Form*
 
 * Configure via *Administer->CiviContribute->User Payment Forms->Collect Payments*
@@ -48,7 +48,7 @@ On submit it redirects to a URL which defaults to the bulk payment form. coid an
 
 ### Bulk Payment Form
 This allows a user to make a payment for a collection of payments.
-(actually a contribution linked to a set of other contributions via check_number field)
+(actually a contribution linked to a set of other contributions via a custom field "Bulk Identifier")
 on an existing contribution if they have permission and the correct URL.
 
 * Configure via *Administer->CiviContribute->User Payment Forms->Bulk Payment*
@@ -56,7 +56,7 @@ on an existing contribution if they have permission and the correct URL.
   * coid = Contribution ID
   * cid = Contact ID
   * cs = Checksum (Optional if you don't want the user to need to login first).
-  
+
 If a contribution linked to a bulk contribution is paid individually it will be removed from the bulk contribution.
 
 ### Bulk Invoice Form

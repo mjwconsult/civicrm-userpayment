@@ -4,12 +4,12 @@
  */
 
 /**
- * This class is used to create a form at: civicrm/user/payment/collect?reset=1&cid=202&id=bulk1
- * The form allows you to collect a number of contributions together and create a single "bulk" one that will
- *   pay them all off
- * Class CRM_Userpayment_Form_CollectPayments
+ * This class is used to create a form at: civicrm/user/payment/relation?reset=1&cid=202
+ * The form allows you to allocate a payment to a number of contacts linked by relationship to the primay (cid=)
+
+ * Class CRM_Userpayment_Form_RelationPayments
  */
-class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment {
+class CRM_Userpayment_Form_RelationPayments extends CRM_Userpayment_Form_Payment {
 
   /**
    * Pre process form.
@@ -19,8 +19,6 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
    */
   public function preProcess() {
     $this->getContactID();
-
-    $this->assign('bulkIdentifier', CRM_Utils_Request::retrieveValue('id', 'String', NULL, TRUE));
 
     // We can access this if the contact has edit permissions and provided a valid checksum
     if (!CRM_Contact_BAO_Contact_Permission::validateChecksumContact($this->getContactID(), $this)) {
@@ -32,6 +30,8 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
     $this->assign('introduction', $intro);
 
     $this->setTitle(\Civi::settings()->get('userpayment_paymentcollect_title'));
+
+    $this->assign('listOfPayments', $this->getListOfPayments());
   }
 
   /**
@@ -49,7 +49,6 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
         'name' => ts('Cancel'),
       ],
     ]);
-    $this->add('hidden', 'id', 'Bulk Identifier')->freeze();
   }
 
   /**
@@ -57,7 +56,6 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
    */
   public function setDefaultValues() {
     $defaults = [];
-    $defaults['id'] = CRM_Utils_Request::retrieveValue('id', 'String', NULL, TRUE);
     return $defaults;
   }
 
@@ -79,8 +77,8 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
     $amounts = ['total_amount' => 0, 'tax_amount' => 0, 'fee_amount' => 0];
     foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
       $amounts['total_amount'] += $contributionDetail['total_amount'];
-      $amounts['tax_amount'] += $contributionDetail['tax_amount'] ?? 0;
-      $amounts['fee_amount'] += $contributionDetail['fee_amount'] ?? 0;
+      $amounts['tax_amount'] += $contributionDetail['tax_amount'];
+      $amounts['fee_amount'] += $contributionDetail['fee_amount'];
     }
     // Create a contribution matching the total amount of all the other contributions
     $contributionParams = [
@@ -112,6 +110,22 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
 
     $url = CRM_Utils_System::url(\Civi::settings()->get('userpayment_paymentcollect_redirecturl'), "coid={$bulkContribution['id']}&cid={$this->getContactID()}");
     CRM_Utils_System::redirect($url);
+  }
+
+  public function getListOfPayments() {
+    // @todo
+    $this->amount['member'] = 12;
+    $this->amount['donation'] = 20;
+
+    $contactIDs = [200, 201, 202, 203];
+
+    foreach ($contactIDs as $contactID) {
+      $displayName = civicrm_api3('Contact', 'getvalue', ['id' => $contactID, 'return' => 'display_name']);
+      $list[$contactID] = ['name' => $displayName, 'amount' => $this->amount['member']];
+    }
+    $list[0] = ['name' => 'Donation', 'amount' => $this->amount['donation']];
+
+    return $list;
   }
 
 }

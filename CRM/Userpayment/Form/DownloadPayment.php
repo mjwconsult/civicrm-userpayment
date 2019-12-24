@@ -13,7 +13,7 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
     $bulkIdentifier = CRM_Utils_Request::retrieveValue('id', 'String');
     if (!empty($bulkIdentifier)) {
       try {
-        $this->contributionID = civicrm_api3('Contribution', 'getvalue', ['return' => 'id', 'check_number' => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier)]);
+        $this->contributionID = civicrm_api3('Contribution', 'getvalue', ['return' => 'id', CRM_Userpayment_BulkContributions::getIdentifierFieldName() => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier)]);
       }
       catch (Exception $e) {
         // Not found. Continue and see if we can get the contribution ID another way.
@@ -81,14 +81,14 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
 
     // Get the bulk identifier that links these together
     $bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster(civicrm_api3('Contribution', 'getvalue', [
-      'return' => 'check_number',
+      'return' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
       'id' => $this->getContributionID(),
     ]));
 
-    // Get all contributions with a "check_number" matching the one specified on the form
+    // Get all contributions with a bulk identifier matching the one specified on the form
     $contributions = civicrm_api3('Contribution', 'get', [
       'return' => ['id', 'contact_id', 'total_amount', 'source', 'currency'],
-      'check_number' => $bulkIdentifier,
+      CRM_Userpayment_BulkContributions::getIdentifierFieldName() => $bulkIdentifier,
     ]);
 
     $this->assign('invoiceReference', CRM_Userpayment_BulkContributions::getInvoiceReference($this->getContributionID(), $bulkIdentifier));
