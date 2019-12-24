@@ -9,11 +9,18 @@
 
   <div class="crm-section crm-payment-form-block-amount">
     <fieldset id="amount">
-    <div class="label">{$form.total_amount.label}</div>
-    <div class="content">
-    <span id='totalAmount'>{$form.currency.html|crmAddClass:eight}&nbsp;{$form.total_amount.html|crmAddClass:eight}</span>
-    &nbsp; <span class="status">{ts}Balance Owed{/ts}: {$contributionBalance.balance|crmMoney:$contributionBalance.currency}</span>
-    </div>
+      <div class="crm-section bold" id="crm-section-balance">
+        <div class="label">Total</div>
+        <div class="content">{$contributionBalance.total|crmMoney:$contributionBalance.currency}</div>
+      </div>
+      <div class="crm-section" id="crm-section-paid">
+        <div class="label">Paid</div>
+        <div class="content">{$contributionBalance.paid|crmMoney:$contributionBalance.currency}</div>
+      </div>
+      <div class="crm-section" id="crm-section-amount">
+        <div class="label">To Pay</div>
+        <div class="content">{$contributionBalance.currencySymbol}{$form.currency.html|crmAddClass:eight} {$form.total_amount.html|crmAddClass:eight}</div>
+      </div>
     </fieldset>
     <div id="payment-errors" role="alert" class="alert alert-danger hidden"></div>
   </div>
