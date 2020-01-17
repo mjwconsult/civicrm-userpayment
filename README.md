@@ -1,7 +1,5 @@
 # userpayment
 
-![Screenshot](/images/screenshot.png)
-
 This extension adds various forms for making payments in CiviCRM.
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
@@ -9,7 +7,7 @@ The extension is licensed under [AGPL-3.0](LICENSE.txt).
 ## Requirements
 
 * PHP v7.1+
-* CiviCRM 5.13
+* CiviCRM 5.19
 
 ## Installation
 
@@ -71,3 +69,5 @@ This displays an "invoice" on screen which the user can save/print and use later
   * cid = Contact ID
   * cs = Checksum (Optional if you don't want the user to need to login first).
 
+#### Additional Notes
+If you delete a bulk payment the identifer field on all linked payments will be cleared.

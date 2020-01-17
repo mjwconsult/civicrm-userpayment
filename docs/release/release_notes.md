@@ -8,6 +8,19 @@ Where:
 * minor: Breaking change in some circumstances, or a new feature. Read carefully and make sure you understand the impact of the change.
 * incremental: A "safe" change / improvement. Should *always* be safe to upgrade.
 
+## Release 0.8
+
+* Fix PHP notice when tax/fee amount is not set
+* When deleting master bulk payment clear the identifier field for all linked contributions
+* If payment ID does not exist report back to user instead of an error
+
+## Release 0.7
+
+* Make amounts clearer on payment forms
+* Switch to using custom field to hold bulk identifier
+* Fix for processBillingAddress creating duplicate contacts for bulk payments
+* Add support for 'removing' contributions from the bulk contribution if they are paid individually
+
 ## Release 0.5
 
 * Remove 'Done' button from invoice
