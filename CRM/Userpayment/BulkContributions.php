@@ -166,4 +166,93 @@ class CRM_Userpayment_BulkContributions {
     return "{$contributionID}_{$bulkIdentifier}";
   }
 
+  /**
+   * Remove a contribution from a bulk contribution (clear the bulk identifier field).
+   * Called via userpayment_civicrm_post
+   *
+   * @param \CRM_Contribute_DAO_Contribution $objectRef
+   *
+   * @throws \CiviCRM_API3_Exception
+   */
+  public static function removeFromBulkContribution($objectRef) {
+    if (isset(Civi::$statics[__CLASS__]['removebulkcontribution'])) {
+      return;
+    }
+    Civi::$statics[__CLASS__]['removebulkcontribution'] = TRUE;
+
+    // This checks if a contribution has been paid and is part of a bulk contribution
+    // If so, the bulk contribution is reduced by that amount and the bulk identifier removed
+    $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
+    if (empty($objectRef->$customFieldName)) {
+      return;
+    }
+    if ((int)$objectRef->contribution_status_id !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
+      return;
+    }
+
+    // We have a completed contribution with a bulk identifier - does it have a corresponding bulk contribution?
+    try {
+      $masterContribution = civicrm_api3('Contribution', 'getsingle', [$customFieldName => CRM_Userpayment_BulkContributions::getMasterIdentifier($objectRef->$customFieldName)]);
+
+      if (empty($objectRef->total_amount)) {
+        return;
+      }
+      // If the master contribution is completed don't touch
+      if ((int)$masterContribution['contribution_status_id'] === (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
+        return;
+      }
+
+      // Reduce the bulk contribution by the amount that's been paid. Remove the bulk identifier from the linked contribution.
+      $masterContribution['total_amount'] = $masterContribution['total_amount'] - (float) $objectRef->total_amount;
+      $transaction = new CRM_Core_Transaction();
+      civicrm_api3('Contribution', 'create', ['id' => $masterContribution['id'], 'total_amount' => $masterContribution['total_amount']]);
+      civicrm_api3('Contribution', 'create', ['id' => $objectRef->id, $customFieldName => '']);
+      $transaction->commit();
+    }
+    catch (Exception $e) {
+      // We've either not found one or there is more than one. Don't handle it.
+      return;
+    }
+  }
+
+  public static function removeFromDeletedBulkContribution($masterContributionID) {
+    if (isset(Civi::$statics[__CLASS__]['removefromdeletedbulkcontribution'])) {
+      return;
+    }
+    Civi::$statics[__CLASS__]['removedeletedbulkcontribution'] = TRUE;
+
+    // This checks if a contribution has been paid and is part of a bulk contribution
+    // If so, the bulk contribution is reduced by that amount and the bulk identifier removed
+    $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
+    $masterContribution = civicrm_api3('Contribution', 'getsingle', [
+      'id' => $masterContributionID,
+    ]);
+    if (empty($masterContribution[$customFieldName])) {
+      return;
+    }
+
+    // We have a completed contribution with a bulk identifier - does it have a corresponding bulk contribution?
+    try {
+      $bulkContributions = civicrm_api3('Contribution', 'get', [$customFieldName => CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($masterContribution[$customFieldName])])['values'];
+      foreach ($bulkContributions as $contributionID => $contributionDetail) {
+        // Loop through all contributions linked to the master and remove the bulk identifier
+        $groupID = civicrm_api3('CustomGroup', 'getvalue', [
+          'return' => "id",
+          'name' => "bulk_payments",
+        ]);
+        $contributionParams = [
+          'entity_id' => $contributionID,
+          CRM_Userpayment_Utils::getCustomByName('identifier', $groupID) => 'null',
+        ];
+        // We use CustomValue.create instead of Contribution.create because Contribution.create is way too slow
+        civicrm_api3('CustomValue', 'create', $contributionParams);
+      }
+    }
+    catch (Exception $e) {
+      // We've either not found one or there is more than one. Don't handle it.
+      \Civi::log()->error('removeFromDeletedBulkContribution: ' . $e->getMessage());
+      return;
+    }
+  }
+
 }

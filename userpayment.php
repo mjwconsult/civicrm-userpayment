@@ -238,56 +238,32 @@ function userpayment_civicrm_navigationMenu(&$menu) {
   _userpayment_civix_navigationMenu($menu);
 }
 
+function userpayment_civicrm_pre($op, $objectName, $id, &$params) {
+  if ($objectName !== 'Contribution') {
+    return;
+  }
+
+  switch ($op) {
+    case 'delete':
+        CRM_Userpayment_BulkContributions::removeFromDeletedBulkContribution($id);
+      break;
+
+  }
+}
+
 function userpayment_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   if ($objectName !== 'Contribution') {
     return;
   }
 
-  if (CRM_Core_Transaction::isActive()) {
-    CRM_Core_Transaction::addCallback(CRM_Core_Transaction::PHASE_POST_COMMIT, 'userpayment_callback_removebulkcontribution', [$objectRef]);
-  }
-  else {
-    userpayment_callback_removebulkcontribution($objectRef);
-  }
-}
-
-function userpayment_callback_removebulkcontribution($objectRef) {
-  if (isset(Civi::$statics[E::LONG_NAME]['removebulkcontribution'])) {
-    return;
-  }
-  Civi::$statics[E::LONG_NAME]['removebulkcontribution'] = TRUE;
-
-  // This checks if a contribution has been paid and is part of a bulk contribution
-  // If so, the bulk contribution is reduced by that amount and the bulk identifier removed
-  $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
-  if (empty($objectRef->$customFieldName)) {
-    return;
-  }
-  if ((int)$objectRef->contribution_status_id !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
-    return;
-  }
-
-  // We have a completed contribution with a bulk identifier - does it have a corresponding bulk contribution?
-  try {
-    $masterContribution = civicrm_api3('Contribution', 'getsingle', [$customFieldName => CRM_Userpayment_BulkContributions::getMasterIdentifier($objectRef->$customFieldName)]);
-
-    if (empty($objectRef->total_amount)) {
-      return;
-    }
-    // If the master contribution is completed don't touch
-    if ((int)$masterContribution['contribution_status_id'] === (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
-      return;
-    }
-
-    // Reduce the bulk contribution by the amount that's been paid. Remove the bulk identifier from the linked contribution.
-    $masterContribution['total_amount'] = $masterContribution['total_amount'] - (float) $objectRef->total_amount;
-    $transaction = new CRM_Core_Transaction();
-    civicrm_api3('Contribution', 'create', ['id' => $masterContribution['id'], 'total_amount' => $masterContribution['total_amount']]);
-    civicrm_api3('Contribution', 'create', ['id' => $objectRef->id, $customFieldName => '']);
-    $transaction->commit();
-  }
-  catch (Exception $e) {
-    // We've either not found one or there is more than one. Don't handle it.
-    return;
+  switch ($op) {
+    case 'edit':
+      if (CRM_Core_Transaction::isActive()) {
+        CRM_Core_Transaction::addCallback(CRM_Core_Transaction::PHASE_POST_COMMIT, 'CRM_Userpayment_BulkContributions::removeFromBulkContribution', [$objectRef]);
+      }
+      else {
+        CRM_Userpayment_BulkContributions::removeFromBulkContribution($objectRef);
+      }
+      break;
   }
 }
