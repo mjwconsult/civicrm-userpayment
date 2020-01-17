@@ -61,10 +61,20 @@ class CRM_Userpayment_AJAX {
     ];
     $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
 
-    $existingContribution = civicrm_api3('Contribution', 'getsingle', [
-      'return' => [CRM_Userpayment_BulkContributions::getIdentifierFieldName(), 'contribution_status_id'],
-      'id' => $params['coid'],
-    ]);
+    try {
+      $existingContribution = civicrm_api3('Contribution', 'getsingle', [
+        'return' => [
+          CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
+          'contribution_status_id'
+        ],
+        'id' => $params['coid'],
+      ]);
+    }
+    catch (Exception $e) {
+      CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
+      echo json_encode(['message' => "ID does not exist!"]);
+      CRM_Utils_System::civiExit(1);
+    }
 
     // Don't add a second time
     if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()] === $params['cnum']) {
