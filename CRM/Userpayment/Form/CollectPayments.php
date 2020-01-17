@@ -79,8 +79,8 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
     $amounts = ['total_amount' => 0, 'tax_amount' => 0, 'fee_amount' => 0];
     foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
       $amounts['total_amount'] += $contributionDetail['total_amount'];
-      $amounts['tax_amount'] += $contributionDetail['tax_amount'] ?? 0;
-      $amounts['fee_amount'] += $contributionDetail['fee_amount'] ?? 0;
+      $amounts['tax_amount'] += (float) $contributionDetail['tax_amount'] ?? 0;
+      $amounts['fee_amount'] += (float) $contributionDetail['fee_amount'] ?? 0;
     }
     // Create a contribution matching the total amount of all the other contributions
     $contributionParams = [
