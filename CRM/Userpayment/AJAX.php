@@ -43,11 +43,12 @@ class CRM_Userpayment_AJAX {
     ];
     $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
 
-    $contribution = civicrm_api3('Contribution', 'setvalue', [
-      'field' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
-      'id' => $params['coid'],
-      'value' => NULL,
-    ]);
+    $contributionParams = [
+      'entity_id' => $params['coid'],
+      CRM_Userpayment_BulkContributions::getIdentifierFieldName() => 'null',
+    ];
+    // We use CustomValue.create instead of Contribution.create because Contribution.create is way too slow
+    civicrm_api3('CustomValue', 'create', $contributionParams);
   }
 
   /**
@@ -71,35 +72,38 @@ class CRM_Userpayment_AJAX {
       ]);
     }
     catch (Exception $e) {
-      CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
-      echo json_encode(['message' => "ID does not exist!"]);
-      CRM_Utils_System::civiExit(1);
+      self::returnAjaxError('ID does not exist!');
     }
 
     // Don't add a second time
     if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()] === $params['cnum']) {
-      CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
-      echo json_encode(['message' => "You have already added {$params['coid']} to this bulk payment!"]);
-      CRM_Utils_System::civiExit(1);
+      self::returnAjaxError("You have already added {$params['coid']} to this bulk payment!");
     }
     // Only allow adding pending contributions
     if ((int)$existingContribution['contribution_status_id'] !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
-      CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
-      echo json_encode(['message' => "Cannot add {$params['coid']} because it is not pending payment"]);
-      CRM_Utils_System::civiExit(1);
+      self::returnAjaxError("Cannot add {$params['coid']} because it is not pending payment");
+    }
+    if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()]
+      === CRM_Userpayment_BulkContributions::getMasterIdentifier($params['cnum'])) {
+      self::returnAjaxError('You cannot add a bulk payment to itself!');
     }
     // Don't add if it's already added to another bulk contribution
     if (!empty($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()])) {
-      CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
-      echo json_encode(['message' => 'This ID is already assigned to another bulk payment']);
-      CRM_Utils_System::civiExit(1);
+      self::returnAjaxError('This ID is already assigned to another bulk payment');
     }
 
-    civicrm_api3('Contribution', 'setvalue', [
-      'field' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
-      'id' => $params['coid'],
-      'value' => $params['cnum'],
-    ]);
+    $contributionParams = [
+      'entity_id' => $params['coid'],
+      CRM_Userpayment_BulkContributions::getIdentifierFieldName() => $params['cnum'],
+    ];
+    // We use CustomValue.create instead of Contribution.create because Contribution.create is way too slow
+    civicrm_api3('CustomValue', 'create', $contributionParams);
+  }
+
+  private static function returnAjaxError($message) {
+    CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
+    echo json_encode(['message' => $message]);
+    CRM_Utils_System::civiExit(1);
   }
 
 }

@@ -1,4 +1,4 @@
-## Information
+# Information
 
 Releases use the following numbering system:
 **{major}.{minor}.{incremental}**
@@ -7,6 +7,14 @@ Where:
 * major: Major refactoring or rewrite - make sure you read and test very carefully!
 * minor: Breaking change in some circumstances, or a new feature. Read carefully and make sure you understand the impact of the change.
 * incremental: A "safe" change / improvement. Should *always* be safe to upgrade.
+
+## Release 0.9
+
+#### Collect Payments
+
+* Enable enter key to "Add payment".
+* Fix issues with bulk identifer not always correctly added/removed.
+* Enable sweetalert for nicer error messages.
 
 ## Release 0.8
 

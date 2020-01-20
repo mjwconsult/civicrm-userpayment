@@ -259,10 +259,10 @@ function userpayment_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   switch ($op) {
     case 'edit':
       if (CRM_Core_Transaction::isActive()) {
-        CRM_Core_Transaction::addCallback(CRM_Core_Transaction::PHASE_POST_COMMIT, 'CRM_Userpayment_BulkContributions::removeFromBulkContribution', [$objectRef]);
+        CRM_Core_Transaction::addCallback(CRM_Core_Transaction::PHASE_POST_COMMIT, 'CRM_Userpayment_BulkContributions::removeFromBulkContribution', [$objectId]);
       }
       else {
-        CRM_Userpayment_BulkContributions::removeFromBulkContribution($objectRef);
+        CRM_Userpayment_BulkContributions::removeFromBulkContribution($objectId);
       }
       break;
   }

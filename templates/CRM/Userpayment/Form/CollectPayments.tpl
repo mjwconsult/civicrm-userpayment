@@ -10,7 +10,7 @@
     </div>
   {$form.id.html}
     <div class="section-add-contribution">
-    <label for="add-contribution-id">Add Payment Number:</label> <input type="text" id="add-contribution-id" />
+    <label for="add-contribution-id">Add Payment Number:</label> <input type="text" id="add-contribution-id" onkeydown="window.collectPayments.addEnter(event)"/>
       <input type="button" value="Add" id="btn-add-contribution" onclick="window.collectPayments.add()"/>
     </div>
     {strip}
@@ -73,15 +73,24 @@
                 },
                 error: function (data, status) {
                   if (typeof data.responseJSON.message !== 'undefined') {
-                    alert(data.responseJSON.message);
+                    crmAlert('error', data.responseJSON.message);
                   }
                   else {
-                    alert("An error occurred while removing the contribution");
+                    crmAlert('error', "An error occurred while removing the contribution");
                   }
                 }
               });
             },
+            addEnter: function(event) {
+              if(event.keyCode === 13) {
+                window.collectPayments.add(event);
+              }
+            },
             add: function(event) {
+              var dataId = $('#add-contribution-id').val();
+              if (dataId.length === 0) {
+                return;
+              }
               $('#btn-add-contribution').attr('disabled', true);
               var dataId = $('#add-contribution-id').val();
               var URL =  CRM.url('civicrm/ajax/collectpayments/add', {coid: dataId, cnum: bulkIdentifier});
@@ -93,10 +102,10 @@
                 },
                 error: function(data, status) {
                   if (typeof data.responseJSON.message !== 'undefined') {
-                    alert(data.responseJSON.message);
+                    crmAlert('error', data.responseJSON.message);
                   }
                   else {
-                    alert("An error occurred while adding the contribution");
+                    crmAlert('error', "An error occurred while adding the contribution");
                   }
                   $('#btn-add-contribution').removeAttr('disabled');
                 }
@@ -139,3 +148,4 @@
   </script>
 {/literal}
 
+{include file="CRM/sweetalert.tpl"}
