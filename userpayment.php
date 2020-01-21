@@ -281,7 +281,7 @@ function userpayment_civicrm_alterMailParams(&$params, $context) {
         'return' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
         'id' => $tplParams['id'],
       ]);
-      if (substr($bulkIdentifier, 0, 5) === "BULK_") { // only for bulk master payments
+      if (substr($bulkIdentifier, 0, 5) === CRM_Userpayment_BulkContributions::MASTER_PREFIX) { // only for bulk master payments
         $bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($bulkIdentifier);
         $contributions  = civicrm_api3('Contribution', 'get', [
           'return' => ["id"],
