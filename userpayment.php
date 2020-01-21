@@ -275,8 +275,7 @@ function userpayment_civicrm_post($op, $objectName, $objectId, &$objectRef) {
  */
 function userpayment_civicrm_alterMailParams(&$params, $context) {
   if ($context == 'messageTemplate' && $params['valueName'] == 'contribution_invoice_receipt') {
-    $invoiceDetails = array();
-    $tplParams      =& $params['tplParams'];
+    $tplParams =& $params['tplParams'];
     if ($tplParams['component'] == 'contribute' && $tplParams['id']) {
       $bulkIdentifier = civicrm_api3('Contribution', 'getvalue', [
         'return' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
