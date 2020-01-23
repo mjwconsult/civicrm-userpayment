@@ -267,3 +267,36 @@ function userpayment_civicrm_post($op, $objectName, $objectId, &$objectRef) {
       break;
   }
 }
+
+/**
+ * Implements hook_civicrm_alterMailParams().
+ * Display line items from all connected payments when master payment gets paid.
+ *
+ */
+function userpayment_civicrm_alterMailParams(&$params, $context) {
+  if ($context == 'messageTemplate' && $params['valueName'] == 'contribution_invoice_receipt') {
+    $tplParams =& $params['tplParams'];
+    if ($tplParams['component'] == 'contribute' && $tplParams['id']) {
+      $bulkIdentifier = civicrm_api3('Contribution', 'getvalue', [
+        'return' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
+        'id' => $tplParams['id'],
+      ]);
+      if (substr($bulkIdentifier, 0, 5) === CRM_Userpayment_BulkContributions::MASTER_PREFIX) { // only for bulk master payments
+        $bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($bulkIdentifier);
+        $contributions  = civicrm_api3('Contribution', 'get', [
+          'return' => ["id"],
+          CRM_Userpayment_BulkContributions::getIdentifierFieldName() => $bulkIdentifier,
+        ]);
+
+        $lineItems = array();
+        foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
+          $line = CRM_Price_BAO_LineItem::getLineItemsByContributionID($contributionID);
+          $lineItems = $lineItems + $line;
+        }
+        if (!empty($lineItems)) {
+          $tplParams['lineItem'] = $lineItems;
+        }
+      }
+    }
+  }
+}
