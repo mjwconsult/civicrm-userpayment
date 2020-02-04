@@ -60,9 +60,9 @@ class CRM_Userpayment_AJAX {
       'coid' => 'Positive',
       'cnum' => 'String',
     ];
-    $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
 
     try {
+      $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
       $existingContribution = civicrm_api3('Contribution', 'getsingle', [
         'return' => [
           CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
