@@ -46,7 +46,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
    * Build the form object.
    */
   public function buildQuickForm() {
-    CRM_Core_Payment_Form::buildPaymentForm($this, $this->_paymentProcessor, FALSE, FALSE, CRM_Utils_Request::retrieve('payment_instrument_id', 'Integer'));
+    CRM_Core_Payment_Form::buildPaymentForm($this, $this->_paymentProcessor, FALSE, FALSE);
     // We don't allow the pay later processor when making a payment
     unset($this->_processors[0]);
     $this->add('select', 'payment_processor_id', ts('Payment Processor'), $this->_processors, NULL);
