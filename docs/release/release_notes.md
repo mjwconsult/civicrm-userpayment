@@ -8,6 +8,13 @@ Where:
 * minor: Breaking change in some circumstances, or a new feature. Read carefully and make sure you understand the impact of the change.
 * incremental: A "safe" change / improvement. Should *always* be safe to upgrade.
 
+## Release 0.10
+
+* Add source description to master bulk payment. Add bulkidentifier as trxn_id to payments made by a bulk payment
+* Don't specify payment_instrument_id for buildPaymentForm
+* Catch error if user tries to add a payment but uses a string instead of a contribution ID
+* For master payment invoice - Display line items from all connected payments
+
 ## Release 0.9
 
 #### Collect Payments
