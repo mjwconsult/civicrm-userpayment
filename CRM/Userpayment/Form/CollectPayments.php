@@ -91,6 +91,7 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
       'fee_amount' => $amounts['fee_amount'],
       'contribution_status_id' => "Pending",
       'contact_id' => "user_contact_id",
+      'source' => 'Bulk payment: ' . CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier),
       CRM_Userpayment_BulkContributions::getIdentifierFieldName() => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier),
     ];
 

@@ -10,6 +10,11 @@
 class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
 
   /**
+   * @var array of payment params
+   */
+  protected $_params = [];
+
+  /**
    * Pre process form.
    *
    * @throws \CRM_Core_Exception
@@ -162,11 +167,11 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
     }
 
     // Get the bulk identifier that links these together
-    $bulkIdentifier = civicrm_api3('Contribution', 'getvalue', [
+    $masterBulkIdentifier = (string) civicrm_api3('Contribution', 'getvalue', [
       'return' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
       'id' => $this->getContributionID(),
     ]);
-    $bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($bulkIdentifier);
+    $bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($masterBulkIdentifier);
 
     // Get all contributions with a bulk identifier matching the one specified on the form
     $contributions = civicrm_api3('Contribution', 'get', [
@@ -177,13 +182,17 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
     try {
       foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
         // Create a payment for each of these bulk contributions
-        $payment = civicrm_api3('Payment', 'create', [
+        civicrm_api3('Payment', 'create', [
             'contribution_id' => $contributionID,
             'total_amount' => $contributionDetail['total_amount'],
             'payment_instrument_id' => 'Bulk Payment',
+            'trxn_id' => $bulkIdentifier,
           ]
         );
       }
+    }
+    catch (Exception $e) {
+      \Civi::log()->debug('BulkPayment error creating payments: ' . $e->getMessage());
     }
     finally {
       // Always create the payment record on the contribution - as this is a "real" contribution we record even if there were failures above
