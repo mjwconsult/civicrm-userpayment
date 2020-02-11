@@ -10,7 +10,8 @@ Where:
 
 ## Release 0.11
 
-* Workaround issues with retrieving total_amount from contribution API
+* Workaround issues with retrieving total_amount from contribution API.
+* Trim payment number before adding via AJAX call.
 
 ## Release 0.10
 

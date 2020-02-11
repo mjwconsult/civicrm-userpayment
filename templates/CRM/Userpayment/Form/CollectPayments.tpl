@@ -92,7 +92,7 @@
                 return;
               }
               $('#btn-add-contribution').attr('disabled', true);
-              var dataId = $('#add-contribution-id').val();
+              var dataId = $.trim($('#add-contribution-id').val());
               var URL =  CRM.url('civicrm/ajax/collectpayments/add', {coid: dataId, cnum: bulkIdentifier});
               $.ajax({
                 url: URL,

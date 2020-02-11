@@ -103,7 +103,8 @@ class CRM_Userpayment_AJAX {
   private static function returnAjaxError($message) {
     CRM_Utils_System::setHttpHeader('Content-Type', 'application/json');
     echo json_encode(['message' => $message]);
-    CRM_Utils_System::civiExit(1);
+    http_response_code(400);
+    exit(1);
   }
 
 }

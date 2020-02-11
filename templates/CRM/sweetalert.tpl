@@ -2,7 +2,7 @@
   <script type="text/javascript">
     var crmAlert = function ($type, $message) {
       if (typeof Swal !== 'undefined') {
-        Swal.fire({type: $type, title: $message});
+        Swal.fire({icon: $type, title: $message});
       }
       else {
         alert($message);
