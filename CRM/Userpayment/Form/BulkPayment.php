@@ -174,13 +174,10 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
     $bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($masterBulkIdentifier);
 
     // Get all contributions with a bulk identifier matching the one specified on the form
-    $contributions = civicrm_api3('Contribution', 'get', [
-      'return' => ["id", 'total_amount'],
-      CRM_Userpayment_BulkContributions::getIdentifierFieldName() => $bulkIdentifier,
-    ]);
+    $contributions = CRM_Userpayment_BulkContributions::getContributionsForBulkIdentifier($bulkIdentifier);
 
     try {
-      foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
+      foreach ($contributions as $contributionID => $contributionDetail) {
         // Create a payment for each of these bulk contributions
         civicrm_api3('Payment', 'create', [
             'contribution_id' => $contributionID,

@@ -67,13 +67,10 @@ class CRM_Userpayment_BulkContributions {
     }
 
     // Get all contributions with a bulk identifier matching the one specified on the form
-    $contributions = civicrm_api3('Contribution', 'get', [
-      'return' => ['id', 'contact_id', 'total_amount', 'source', 'currency'],
-      self::getIdentifierFieldName() => $params['cnum'],
-    ]);
+    $contributions = self::getContributionsForBulkIdentifier($params['cnum']);
 
     $sum = 0;
-    foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
+    foreach ($contributions as $contributionID => $contributionDetail) {
       $contactDisplayName = CRM_Userpayment_BulkContributions::getFormattedDisplayName($contributionDetail['contact_id']);
       $row = [
         'DT_RowId' => $contributionDetail['id'],
@@ -255,6 +252,25 @@ class CRM_Userpayment_BulkContributions {
       \Civi::log()->error('removeFromDeletedBulkContribution: ' . $e->getMessage());
       return;
     }
+  }
+
+  public static function getContributionsForBulkIdentifier($bulkIdentifier) {
+    // Get all contributions with a bulk identifier matching the one specified on the form
+    $contributions = civicrm_api3('Contribution', 'get', [
+      self::getIdentifierFieldName() => $bulkIdentifier,
+    ])['values'];
+
+    foreach ($contributions as $contribution) {
+      $contributionBalance = civicrm_api3('Contribution', 'getbalance', [
+        'id' => $contribution['id'],
+      ])['values'];
+      $contributionBalance['total_amount'] = $contributionBalance['total'];
+      $contributionBalance['tax_amount'] = $contributionBalance['tax_amount'] ?? 0;
+      $contributions[$contribution['id']] = array_merge($contributions[$contribution['id']], $contributionBalance);
+      $contributions[$contribution['id']]['tax_amount'] = $contributions[$contribution['id']]['tax_amount'] ?? 0;
+    }
+
+    return $contributions ?? [];
   }
 
 }

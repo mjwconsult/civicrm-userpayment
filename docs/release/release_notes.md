@@ -8,6 +8,10 @@ Where:
 * minor: Breaking change in some circumstances, or a new feature. Read carefully and make sure you understand the impact of the change.
 * incremental: A "safe" change / improvement. Should *always* be safe to upgrade.
 
+## Release 0.11
+
+* Workaround issues with retrieving total_amount from contribution API
+
 ## Release 0.10
 
 * Add source description to master bulk payment. Add bulkidentifier as trxn_id to payments made by a bulk payment

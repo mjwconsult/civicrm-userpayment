@@ -70,17 +70,13 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
     // contributions have already been created.
     $bulkIdentifier = $submittedValues['id'];
 
-    // Get all contributions with a bulk identifier matching the one specified on the form
-    $contributions = civicrm_api3('Contribution', 'get', [
-      'return' => ["id", 'total_amount', 'tax_amount', 'fee_amount'],
-      CRM_Userpayment_BulkContributions::getIdentifierFieldName() => $bulkIdentifier,
-    ]);
+    $contributions = CRM_Userpayment_BulkContributions::getContributionsForBulkIdentifier($bulkIdentifier);
 
     $amounts = ['total_amount' => 0, 'tax_amount' => 0, 'fee_amount' => 0];
-    foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
-      $amounts['total_amount'] += $contributionDetail['total_amount'];
-      $amounts['tax_amount'] += (float) $contributionDetail['tax_amount'] ?? 0;
-      $amounts['fee_amount'] += (float) $contributionDetail['fee_amount'] ?? 0;
+    foreach ($contributions as $contributionID => $contributionDetail) {
+      $amounts['total_amount'] += ((float) $contributionDetail['total_amount'] ?? 0);
+      $amounts['tax_amount'] += ((float) $contributionDetail['tax_amount'] ?? 0);
+      $amounts['fee_amount'] += ((float) $contributionDetail['fee_amount'] ?? 0);
     }
     // Create a contribution matching the total amount of all the other contributions
     $contributionParams = [

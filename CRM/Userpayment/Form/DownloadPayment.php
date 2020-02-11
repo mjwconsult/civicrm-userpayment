@@ -86,14 +86,11 @@ class CRM_Userpayment_Form_DownloadPayment extends CRM_Userpayment_Form_Payment 
     ]));
 
     // Get all contributions with a bulk identifier matching the one specified on the form
-    $contributions = civicrm_api3('Contribution', 'get', [
-      'return' => ['id', 'contact_id', 'total_amount', 'source', 'currency'],
-      CRM_Userpayment_BulkContributions::getIdentifierFieldName() => $bulkIdentifier,
-    ]);
+    $contributions = CRM_Userpayment_BulkContributions::getContributionsForBulkIdentifier($bulkIdentifier);
 
     $this->assign('invoiceReference', CRM_Userpayment_BulkContributions::getInvoiceReference($this->getContributionID(), $bulkIdentifier));
 
-    foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
+    foreach ($contributions as $contributionID => $contributionDetail) {
       $contactDisplayName = CRM_Userpayment_BulkContributions::getFormattedDisplayName($contributionDetail['contact_id']);
       $row = [
         'contribution_id' => $contributionDetail['id'],
