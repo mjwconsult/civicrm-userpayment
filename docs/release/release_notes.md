@@ -12,6 +12,7 @@ Where:
 
 * Workaround issues with retrieving total_amount from contribution API.
 * Trim payment number before adding via AJAX call.
+* Add a note when creating the bulk contribution in case we need to reconstruct.
 
 ## Release 0.10
 

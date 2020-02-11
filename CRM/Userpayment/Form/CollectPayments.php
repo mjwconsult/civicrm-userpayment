@@ -77,6 +77,7 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
       $amounts['total_amount'] += ((float) $contributionDetail['total_amount'] ?? 0);
       $amounts['tax_amount'] += ((float) $contributionDetail['tax_amount'] ?? 0);
       $amounts['fee_amount'] += ((float) $contributionDetail['fee_amount'] ?? 0);
+      $listOfIDs[] = $contributionDetail['id'] . ': ' . $contributionDetail['total_amount'];
     }
     // Create a contribution matching the total amount of all the other contributions
     $contributionParams = [
@@ -106,6 +107,15 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
       // do nothing
     }
     $bulkContribution = civicrm_api3('Contribution', 'create', $contributionParams);
+    $bulkContribution = $bulkContribution['values'][$bulkContribution['id']];
+
+    $note = implode(PHP_EOL, $listOfIDs);
+    $note = $bulkContribution['id'] . ': ' . $bulkContribution['total_amount'] . ': ' . CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier) . PHP_EOL . $note;
+    civicrm_api3('Note', 'create', [
+      'entity_id' => $bulkContribution['contact_id'],
+      'note' => $note,
+      'subject' => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier),
+    ]);
 
     $url = CRM_Utils_System::url(\Civi::settings()->get('userpayment_paymentcollect_redirecturl'), "coid={$bulkContribution['id']}&cid={$this->getContactID()}");
     CRM_Utils_System::redirect($url);
