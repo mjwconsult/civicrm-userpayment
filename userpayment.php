@@ -248,10 +248,15 @@ function userpayment_civicrm_pre($op, $objectName, $id, &$params) {
         CRM_Userpayment_BulkContributions::removeFromDeletedBulkContribution($id);
       break;
 
+    case 'edit':
+      \Civi::$statics[E::SHORT_NAME][$objectName]['pre'][$id] =
+        civicrm_api3('Contribution', 'getsingle', ['id' => $id]);
+      break;
+
   }
 }
 
-function userpayment_civicrm_post($op, $objectName, $objectId, &$objectRef) {
+function userpayment_civicrm_post($op, $objectName, $id, &$objectRef) {
   if ($objectName !== 'Contribution') {
     return;
   }
@@ -259,16 +264,31 @@ function userpayment_civicrm_post($op, $objectName, $objectId, &$objectRef) {
   switch ($op) {
     case 'edit':
       if (CRM_Core_Transaction::isActive()) {
-        CRM_Core_Transaction::addCallback(CRM_Core_Transaction::PHASE_POST_COMMIT, 'CRM_Userpayment_BulkContributions::removeFromBulkContribution', [$objectId]);
+        CRM_Core_Transaction::addCallback(CRM_Core_Transaction::PHASE_POST_COMMIT, 'userpayment_civicrm_postCallback', [$op, $objectName, $id, $objectRef]);
       }
       else {
-        CRM_Userpayment_BulkContributions::removeFromBulkContribution($objectId);
+        userpayment_civicrm_postCallback($op, $objectName, $id, $objectRef);
       }
       break;
   }
 }
 
-/**
+function userpayment_civicrm_postCallback($op, $objectName, $id, $objectRef) {
+  if (!isset(\Civi::$statics[E::SHORT_NAME][$objectName]['pre'][$id])) {
+    return;
+  }
+
+  // Compare pre / post bulkIdentifiers
+  $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
+  $entityPre = \Civi::$statics[E::SHORT_NAME][$objectName]['pre'][$id];
+  $bulkIdentifierPostValue = civicrm_api3('Contribution', 'getvalue', ['return' => $customFieldName, 'id' => $id]);
+  $bulkIdentifierPreValue = $entityPre[$customFieldName];
+  if (!empty($bulkIdentifierPreValue) && ($bulkIdentifierPreValue !== $bulkIdentifierPostValue)) {
+    CRM_Userpayment_BulkContributions::removeFromBulkContribution($id, $bulkIdentifierPreValue);
+  }
+}
+
+  /**
  * Implements hook_civicrm_alterMailParams().
  * Display line items from all connected payments when master payment gets paid.
  *

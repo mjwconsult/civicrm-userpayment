@@ -40,6 +40,7 @@ class CRM_Userpayment_AJAX {
   public static function removeBulkContribution() {
     $requiredParameters = [
       'coid' => 'Positive',
+      'cnum' => 'String',
     ];
     $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
 
@@ -47,8 +48,14 @@ class CRM_Userpayment_AJAX {
       'entity_id' => $params['coid'],
       CRM_Userpayment_BulkContributions::getIdentifierFieldName() => 'null',
     ];
+
+    $transaction = new CRM_Core_Transaction();
+    // Remove from the bulk contribution (decrease the amount etc).
+    CRM_Userpayment_BulkContributions::removeFromBulkContribution($contributionParams['entity_id'], $params['cnum']);
+
     // We use CustomValue.create instead of Contribution.create because Contribution.create is way too slow
     civicrm_api3('CustomValue', 'create', $contributionParams);
+    $transaction->commit();
   }
 
   /**

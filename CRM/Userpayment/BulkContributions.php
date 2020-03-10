@@ -167,31 +167,37 @@ class CRM_Userpayment_BulkContributions {
    * Remove a contribution from a bulk contribution (clear the bulk identifier field).
    * Called via userpayment_civicrm_post
    *
-   * @param \CRM_Contribute_DAO_Contribution $objectRef
+   * @param int $contributionId
+   * @param string $bulkIdentifier - the client bulk identifier
    *
    * @throws \CiviCRM_API3_Exception
    */
-  public static function removeFromBulkContribution($contributionId) {
+  public static function removeFromBulkContribution($contributionId, $bulkIdentifier) {
     if (isset(Civi::$statics[__CLASS__]['removebulkcontribution'])) {
       return;
     }
     Civi::$statics[__CLASS__]['removebulkcontribution'] = TRUE;
 
+    // We must have a bulk identifier
+    if (empty($bulkIdentifier)) {
+      return;
+    }
+
+    if (CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier) === $bulkIdentifier) {
+      // This should never happen but if we get passed a bulkIdentifier for a master contribution we should reject
+      return;
+    }
+
+
     $contribution = civicrm_api3('Contribution', 'getsingle', ['id' => $contributionId]);
 
     // This checks if a contribution has been paid and is part of a bulk contribution
     // If so, the bulk contribution is reduced by that amount and the bulk identifier removed
-    $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
-    if (empty($contribution[$customFieldName])) {
-      return;
-    }
-    if ((int)$contribution['contribution_status_id'] !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {
-      return;
-    }
 
+    $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
     // We have a completed contribution with a bulk identifier - does it have a corresponding bulk contribution?
     try {
-      $masterContribution = civicrm_api3('Contribution', 'getsingle', [$customFieldName => CRM_Userpayment_BulkContributions::getMasterIdentifier($contribution[$customFieldName])]);
+      $masterContribution = civicrm_api3('Contribution', 'getsingle', [$customFieldName => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier)]);
 
       if (empty($contribution['total_amount'])) {
         return;
@@ -202,11 +208,22 @@ class CRM_Userpayment_BulkContributions {
       }
 
       // Reduce the bulk contribution by the amount that's been paid. Remove the bulk identifier from the linked contribution.
-      $masterContribution['total_amount'] = $masterContribution['total_amount'] - (float) $contribution['total_amount'];
-      $transaction = new CRM_Core_Transaction();
-      civicrm_api3('Contribution', 'create', ['id' => $masterContribution['id'], 'total_amount' => $masterContribution['total_amount']]);
-      civicrm_api3('Contribution', 'create', ['id' => $contribution['id'], $customFieldName => '']);
-      $transaction->commit();
+      // Recalculate the amounts (@todo this should really be shared with CRM_Userpayment_Form_CollectPayments::postProcess)
+      $contributions = CRM_Userpayment_BulkContributions::getContributionsForBulkIdentifier($bulkIdentifier);
+
+      $masterAmounts = ['total_amount' => 0, 'tax_amount' => 0, 'fee_amount' => 0];
+      foreach ($contributions as $contributionID => $contributionDetail) {
+        $masterAmounts['total_amount'] += ((float) $contributionDetail['total_amount'] ?? 0);
+        $masterAmounts['tax_amount'] += ((float) $contributionDetail['tax_amount'] ?? 0);
+        $masterAmounts['fee_amount'] += ((float) $contributionDetail['fee_amount'] ?? 0);
+      }
+
+      civicrm_api3('Contribution', 'create', [
+        'id' => $masterContribution['id'],
+        'total_amount' => $masterAmounts['total_amount'],
+        'tax_amount' => $masterAmounts['tax_amount'],
+        'fee_amount' => $masterAmounts['fee_amount'],
+      ]);
     }
     catch (Exception $e) {
       // We've either not found one or there is more than one. Don't handle it.
