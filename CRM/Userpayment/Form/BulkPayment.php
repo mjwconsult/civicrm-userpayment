@@ -3,6 +3,8 @@
  * https://civicrm.org/licensing
  */
 
+use CRM_Userpayment_ExtensionUtil as E;
+
 /**
  * This form collects and processes the "bulk" payment.
  * The previous form generates a contribution linked to a collection of contributions.
@@ -21,8 +23,14 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
    * @throws \CiviCRM_API3_Exception
    */
   public function preProcess() {
-    $this->getContactID();
-    $this->getContributionID();
+    if (!$this->getContactID()) {
+      \Civi::log()->error('Missing contactID for user/payment/bulk');
+      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+    }
+    if (!$this->getContributionID()) {
+      \Civi::log()->error('Missing contributionID for user/payment/bulk');
+      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+    }
 
     // We can access this if the contact has edit permissions and provided a valid checksum
     if (!CRM_Contact_BAO_Contact_Permission::validateChecksumContact($this->getContactID(), $this)) {

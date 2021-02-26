@@ -14,11 +14,11 @@
     <url desc="Licensing">http://www.gnu.org/licenses/agpl-3.0.html</url>
     <url desc="Release Notes">https://github.com/mjwconsult/civicrm-userpayment/docs/release/release_notes.md</url>
   </urls>
-  <releaseDate>2020-03-10</releaseDate>
-  <version>0.12</version>
+  <releaseDate>2021-02-26</releaseDate>
+  <version>0.13</version>
   <develStage>stable</develStage>
   <compatibility>
-    <ver>5.19</ver>
+    <ver>5.28</ver>
   </compatibility>
   <requires>
     <ext>mjwshared</ext>

@@ -15,8 +15,14 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
    * @throws \CiviCRM_API3_Exception
    */
   public function preProcess() {
-    $this->getContactID();
-    $this->getContributionID();
+    if (!$this->getContactID()) {
+      \Civi::log()->error('Missing contactID for user/payment/add');
+      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+    }
+    if (!$this->getContributionID()) {
+      \Civi::log()->error('Missing contributionID for user/payment/add');
+      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+    }
 
     // We can access this if the contact has edit permissions and provided a valid checksum
     if (!CRM_Contact_BAO_Contact_Permission::validateChecksumContact($this->getContactID(), $this)) {

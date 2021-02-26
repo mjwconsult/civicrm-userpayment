@@ -18,9 +18,17 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
    * @throws \CiviCRM_API3_Exception
    */
   public function preProcess() {
-    $this->getContactID();
+    if (!$this->getContactID()) {
+      \Civi::log()->error('Missing contactID for user/payment/collect');
+      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+    }
 
-    $this->assign('bulkIdentifier', CRM_Utils_Request::retrieveValue('id', 'String', NULL, TRUE));
+    $bulkIdentifier = CRM_Utils_Request::retrieveValue('id', 'String');
+    if (!$bulkIdentifier) {
+      \Civi::log()->error('Missing bulkIdentifier for user/payment/collect');
+      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+    }
+    $this->assign('bulkIdentifier', $bulkIdentifier);
 
     // We can access this if the contact has edit permissions and provided a valid checksum
     if (!CRM_Contact_BAO_Contact_Permission::validateChecksumContact($this->getContactID(), $this)) {

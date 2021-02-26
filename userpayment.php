@@ -108,33 +108,6 @@ function userpayment_civicrm_managed(&$entities) {
 }
 
 /**
- * Implements hook_civicrm_caseTypes().
- *
- * Generate a list of case-types.
- *
- * Note: This hook only runs in CiviCRM 4.4+.
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_caseTypes
- */
-function userpayment_civicrm_caseTypes(&$caseTypes) {
-  _userpayment_civix_civicrm_caseTypes($caseTypes);
-}
-
-/**
- * Implements hook_civicrm_angularModules().
- *
- * Generate a list of Angular modules.
- *
- * Note: This hook only runs in CiviCRM 4.5+. It may
- * use features only available in v4.6+.
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_angularModules
- */
-function userpayment_civicrm_angularModules(&$angularModules) {
-  _userpayment_civix_civicrm_angularModules($angularModules);
-}
-
-/**
  * Implements hook_civicrm_alterSettingsFolders().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_alterSettingsFolders
@@ -288,7 +261,7 @@ function userpayment_civicrm_postCallback($op, $objectName, $id, $objectRef) {
   }
 }
 
-  /**
+/**
  * Implements hook_civicrm_alterMailParams().
  * Display line items from all connected payments when master payment gets paid.
  *
@@ -297,7 +270,7 @@ function userpayment_civicrm_alterMailParams(&$params, $context) {
   if ($context == 'messageTemplate' && $params['valueName'] == 'contribution_invoice_receipt') {
     $tplParams =& $params['tplParams'];
     if ($tplParams['component'] == 'contribute' && $tplParams['id']) {
-      $bulkIdentifier = civicrm_api3('Contribution', 'getvalue', [
+      $bulkIdentifier = (string) civicrm_api3('Contribution', 'getvalue', [
         'return' => CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
         'id' => $tplParams['id'],
       ]);

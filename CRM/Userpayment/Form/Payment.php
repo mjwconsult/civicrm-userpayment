@@ -33,20 +33,27 @@ class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayme
 
   protected $_contributorEmail = NULL;
 
+  /**
+   * @return int
+   * @throws \CRM_Core_Exception
+   */
   protected function getContributionID() {
     if (empty($this->contributionID)) {
-      $this->contributionID = (int) CRM_Utils_Request::retrieve('coid', 'Positive');
+      $this->contributionID = (int) CRM_Utils_Request::retrieveValue('coid', 'Positive');
     }
     if (empty($this->contributionID)) {
-      $this->contributionID = CRM_Utils_Array::value('contribution_id', $this->_params,
-      CRM_Utils_Array::value('contributionID', $this->_params));
+      $this->contributionID = $this->_params['contribution_id'] ?? $this->_params['contributionID'];
     }
     return $this->contributionID;
   }
 
+  /**
+   * @return int
+   * @throws \CRM_Core_Exception
+   */
   public function getContactID() {
     if (empty($this->contactID)) {
-      $this->contactID = (int) CRM_Utils_Request::retrieve('cid', 'Positive');
+      $this->contactID = (int) CRM_Utils_Request::retrieveValue('cid', 'Positive');
       if (empty($this->contactID)) {
         $this->contactID = parent::getContactID();
       }
@@ -69,10 +76,16 @@ class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayme
     $this->_mode = $test ? 'test' : 'live';
   }
 
+  /**
+   * @param array $contributionBalance
+   */
   protected function setContributionBalance($contributionBalance) {
     $this->contributionBalance = $contributionBalance;
   }
 
+  /**
+   * @return array
+   */
   protected function getContributionBalance() {
     return $this->contributionBalance;
   }
