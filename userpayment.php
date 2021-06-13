@@ -281,7 +281,7 @@ function userpayment_civicrm_alterMailParams(&$params, $context) {
           CRM_Userpayment_BulkContributions::getIdentifierFieldName() => $bulkIdentifier,
         ]);
 
-        $lineItems = array();
+        $lineItems = [];
         foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
           $line = CRM_Price_BAO_LineItem::getLineItemsByContributionID($contributionID);
           $lineItems = $lineItems + $line;

@@ -27,7 +27,7 @@ class CRM_Userpayment_BulkContributions {
    * @throws \CiviCRM_API3_Exception
    */
   public static function getIdentifierFieldName() {
-    return CRM_Userpayment_Utils::getCustomByName(self::CUSTOMFIELD_IDENTIFIER, self::CUSTOMGROUP);
+    return CRM_Mjwshared_Utils::getCustomByName(self::CUSTOMFIELD_IDENTIFIER, self::CUSTOMGROUP);
   }
 
   /**
@@ -258,7 +258,7 @@ class CRM_Userpayment_BulkContributions {
         ]);
         $contributionParams = [
           'entity_id' => $contributionID,
-          CRM_Userpayment_Utils::getCustomByName('identifier', $groupID) => 'null',
+          CRM_Mjwshared_Utils::getCustomByName('identifier', $groupID) => 'null',
         ];
         // We use CustomValue.create instead of Contribution.create because Contribution.create is way too slow
         civicrm_api3('CustomValue', 'create', $contributionParams);

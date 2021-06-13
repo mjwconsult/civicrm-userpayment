@@ -6,8 +6,6 @@ The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Requirements
 
-* PHP v7.1+
-* CiviCRM 5.19
 * https://lab.civicrm.org/extensions/sweetalert (Optional - enables nicer alerts on collect payments).
 
 ## Installation
