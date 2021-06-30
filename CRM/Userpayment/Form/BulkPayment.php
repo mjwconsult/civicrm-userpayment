@@ -201,10 +201,17 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
     }
     finally {
       // Always create the payment record on the contribution - as this is a "real" contribution we record even if there were failures above
-      $trxnsData = $this->_params;
-      $trxnsData['contribution_id'] = $this->getContributionID();
-      $trxnsData['is_send_contribution_notification'] = FALSE;
-      $paymentID = civicrm_api3('Payment', 'create', $trxnsData)['id'];
+      $paymentParams = [
+        'contribution_id' => $this->getContributionID(),
+        'total_amount' => $this->_params['total_amount'],
+        'fee_amount' => $this->_params['fee_amount'] ?? 0,
+        'trxn_id' => $this->_params['trxn_id'] ?? '',
+        'trxn_date' => $this->_params['trxn_date'] ?? date('Y-m-d H:i:s'),
+        'payment_processor_id' => $this->_params['payment_processor_id'],
+        'is_send_contribution_notification' => FALSE,
+        'skipCleanMoney' => TRUE,
+      ];
+      $paymentID = civicrm_api3('Payment', 'create', $paymentParams)['id'];
     }
 
     $statusMsg = E::ts('The payment record has been processed.');
