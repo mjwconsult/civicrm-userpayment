@@ -206,16 +206,14 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     if ($this->_params['amount'] > 0.0) {
       try {
         $payment = Civi\Payment\System::singleton()->getByProcessor($this->_paymentProcessor);
-        $result = $payment->doPayment($this->_params);
+        $paymentParams = $this->_params;
+        $result = $payment->doPayment($paymentParams);
+        $this->_params = array_merge($this->_params, $result);
       }
       catch (\Civi\Payment\Exception\PaymentProcessorException $e) {
         Civi::log()->error('Payment processor exception: ' . $e->getMessage());
         CRM_Core_Error::statusBounce($e->getMessage());
       }
-    }
-
-    if (!empty($result)) {
-      $this->_params = array_merge($this->_params, $result);
     }
 
     $this->set('params', $this->_params);
