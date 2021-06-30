@@ -37,7 +37,7 @@
     </div>
 
     <div class="clear" />
-      {if $isCaptcha}{include file='CRM/common/ReCAPTCHA.tpl'}{/if}
+      {if !empty($isCaptcha)}{include file='CRM/common/ReCAPTCHA.tpl'}{/if}
     <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl" location="bottom"}</div>
   </div>
 
@@ -66,4 +66,3 @@
   });
 </script>
 {/literal}
-

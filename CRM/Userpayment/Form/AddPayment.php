@@ -3,6 +3,8 @@
  * https://civicrm.org/licensing
  */
 
+use CRM_Userpayment_ExtensionUtil as E;
+
 /**
  * This form records additional payments needed when event/contribution is partially paid.
  */
@@ -17,16 +19,16 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
   public function preProcess() {
     if (!$this->getContactID()) {
       \Civi::log()->error('Missing contactID for user/payment/add');
-      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+      throw new CRM_Core_Exception(E::ts('You do not have permission to access this page.'));
     }
     if (!$this->getContributionID()) {
       \Civi::log()->error('Missing contributionID for user/payment/add');
-      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+      throw new CRM_Core_Exception(E::ts('You do not have permission to access this page.'));
     }
 
     // We can access this if the contact has edit permissions and provided a valid checksum
     if (!CRM_Contact_BAO_Contact_Permission::validateChecksumContact($this->getContactID(), $this)) {
-      throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
+      throw new CRM_Core_Exception(E::ts('You do not have permission to access this page.'));
     }
 
     $this->setMode();
@@ -55,11 +57,11 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     CRM_Core_Payment_Form::buildPaymentForm($this, $this->_paymentProcessor, FALSE, FALSE);
     // We don't allow the pay later processor when making a payment
     unset($this->_processors[0]);
-    $this->add('select', 'payment_processor_id', ts('Payment Processor'), $this->_processors, NULL);
+    $this->add('select', 'payment_processor_id', E::ts('Payment Processor'), $this->_processors, NULL);
 
     $attributes = CRM_Core_DAO::getAttribute('CRM_Financial_DAO_FinancialTrxn');
 
-    $label = ts('Payment Amount');
+    $label = E::ts('Payment Amount');
     $totalAmountField = $this->addMoney('total_amount',
       $label,
       TRUE,
@@ -70,7 +72,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
       $totalAmountField->freeze();
     }
 
-    $this->addField('trxn_date', ['entity' => 'FinancialTrxn', 'label' => ts('Date Received'), 'context' => 'Contribution'], FALSE, FALSE);
+    $this->addField('trxn_date', ['entity' => 'FinancialTrxn', 'label' => E::ts('Date Received'), 'context' => 'Contribution'], FALSE, FALSE);
     $this->add('hidden', 'coid');
 
     list($this->_contributorDisplayName, $this->_contributorEmail) = CRM_Contact_BAO_Contact_Location::getEmailDetails($this->getContactID());
@@ -88,12 +90,12 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->addButtons([
       [
         'type' => 'upload',
-        'name' => ts('%1', [1 => ts('Make Payment')]),
+        'name' => E::ts('Make Payment'),
         'isDefault' => TRUE,
       ],
       [
         'type' => 'cancel',
-        'name' => ts('Cancel'),
+        'name' => E::ts('Cancel'),
       ],
     ]);
 
@@ -153,7 +155,6 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->_params = $submittedValues;
     $this->beginPostProcess();
     $this->processBillingAddress();
-
     $this->processCreditCard();
 
     $trxnsData = $this->_params;
@@ -169,11 +170,11 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
       // @todo sort out receipts
       $sendResult = civicrm_api3('Payment', 'sendconfirmation', ['id' => $paymentID])['values'][$paymentID];
       if ($sendResult['is_sent']) {
-        $statusMsg .= ' ' . ts('A receipt has been emailed to the contributor.');
+        $statusMsg .= ' ' . E::ts('A receipt has been emailed to the contributor.');
       }
     }
 
-    CRM_Core_Session::setStatus($statusMsg, ts('Saved'), 'success');
+    CRM_Core_Session::setStatus($statusMsg, E::ts('Saved'), 'success');
   }
 
   public function processCreditCard() {
@@ -190,7 +191,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
       $this->_params['receive_date'] = $now;
     }
     $this->_params['receipt_date'] = $now;
-    $this->_params['invoiceID'] = CRM_Utils_Array::value('invoice_id', $this->_params, md5(uniqid(rand(), TRUE)));
+    $this->_params['invoiceID'] = $this->_params['invoice_id'] ?? md5(uniqid(rand(), TRUE));
     $this->_params['contactID'] = $this->getContactID();
 
     if (\Civi::settings()->get('userpayment_paymentadd_emailreceipt')) {
