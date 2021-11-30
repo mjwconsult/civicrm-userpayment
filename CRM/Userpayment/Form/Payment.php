@@ -159,7 +159,10 @@ class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayme
     $this->_contributorContactID = $this->getContactID();
 
     if (\Civi::settings()->get('userpayment_paymentadd_captcha')) {
-      CRM_Utils_ReCAPTCHA::enableCaptchaOnForm($this);
+      // Add reCAPTCHA
+      if (is_callable(['CRM_Utils_ReCAPTCHA', 'enableCaptchaOnForm'])) {
+        CRM_Utils_ReCAPTCHA::enableCaptchaOnForm($this);
+      }
     }
 
     $this->addButtons([

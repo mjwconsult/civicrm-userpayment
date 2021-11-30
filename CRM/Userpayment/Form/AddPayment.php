@@ -84,7 +84,10 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
     $this->_contributorContactID = $this->getContactID();
 
     if (\Civi::settings()->get('userpayment_paymentadd_captcha')) {
-      CRM_Utils_ReCAPTCHA::enableCaptchaOnForm($this);
+      // Add reCAPTCHA
+      if (is_callable(['CRM_Utils_ReCAPTCHA', 'enableCaptchaOnForm'])) {
+        CRM_Utils_ReCAPTCHA::enableCaptchaOnForm($this);
+      }
     }
 
     $this->addButtons([
