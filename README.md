@@ -32,6 +32,8 @@ This allows a user to make a payment on an existing contribution if they have pe
 
 ### Collect Payment Form
 
+Make sure that anyone using this form has at least "Access AJAX API" permission.
+
 This form allows you to select / add contributions by their ID. They will be linked to a "master" contribution which
 can be used to make payment via the *Bulk Payment Form* or the *Bulk Invoice Form*
 

@@ -3,6 +3,8 @@
  * https://civicrm.org/licensing
  */
 
+use Civi\Api4\Contribution;
+
 /**
  * The class that handles all the AJAX callbacks for CRM_Userpayment
  * Class CRM_Userpayment_AJAX
@@ -70,25 +72,28 @@ class CRM_Userpayment_AJAX {
 
     try {
       $params = CRM_Core_Page_AJAX::validateParams($requiredParameters);
-      $existingContribution = civicrm_api3('Contribution', 'getsingle', [
-        'return' => [
-          CRM_Userpayment_BulkContributions::getIdentifierFieldName(),
-          'contribution_status_id'
-        ],
-        'id' => $params['coid'],
-      ]);
+
+      $existingContribution = Contribution::get(FALSE)
+        ->addSelect('*', 'bulk_payments.identifier')
+        ->addWhere('id', '=', $params['coid'])
+        ->execute()
+        ->first();
     }
     catch (Exception $e) {
       self::returnAjaxError('ID does not exist!');
     }
 
+    $masterContribution = CRM_Userpayment_BulkContributions::getMasterContribution($params['cnum']);
+    if (CRM_Userpayment_BulkContributions::isMasterContributionCompleted($masterContribution)) {
+      self::returnAjaxError("Cannot add to a bulk payment that has already been paid!");
+    }
     // Don't add a second time
     if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()] === $params['cnum']) {
       self::returnAjaxError("You have already added {$params['coid']} to this bulk payment!");
     }
     // Only allow adding pending contributions
     if ((int)$existingContribution['contribution_status_id'] !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
-      self::returnAjaxError("Cannot add {$params['coid']} because it is not pending payment");
+      self::returnAjaxError("Cannot add payment {$params['coid']} because it is not in \"Pending\" status");
     }
     if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()]
       === CRM_Userpayment_BulkContributions::getMasterIdentifier($params['cnum'])) {

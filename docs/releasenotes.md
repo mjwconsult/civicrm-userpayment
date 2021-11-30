@@ -8,6 +8,14 @@ Where:
 * minor: Breaking change in some circumstances, or a new feature. Read carefully and make sure you understand the impact of the change.
 * incremental: A "safe" change / improvement. Should *always* be safe to upgrade.
 
+## Release 1.2
+
+* Require "Access AJAX API" permissions for get/add/remove payments on CollectPayments form - fixes Datatables/AJAX error on load with user that does not have "Access CiviCRM Backend and API".
+* Switch multiple API3 calls to use API4.
+* Handle "BULK_" prefix on CollectPayments form - if ?id=BULK_xx we strip and use identifier xx. Fixes issues with bulk payment editing itself.
+* Don't allow editing bulk payments on CollectPayments form if already paid (Completed).
+* Fix some PHP notices.
+
 ## Release 1.1
 
 * Prevent params being overwritten by PropertyBag and set to NULL via array_merge when doPayment is called - this was preventing some payments from being completed when using Stripe 6.6+.

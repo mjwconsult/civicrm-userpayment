@@ -194,7 +194,7 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
             'contribution_id' => $contributionID,
             'total_amount' => $contributionDetail['total_amount'],
             'payment_instrument_id' => 'Bulk Payment',
-            'trxn_id' => $bulkIdentifier,
+            'trxn_id' => "{$bulkIdentifier}_{$contributionID}",
           ]
         );
       }

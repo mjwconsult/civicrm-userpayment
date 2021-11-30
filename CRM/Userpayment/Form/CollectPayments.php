@@ -3,6 +3,8 @@
  * https://civicrm.org/licensing
  */
 
+use Civi\Api4\Contribution;
+use CRM_Userpayment_ExtensionUtil as E;
 /**
  * This class is used to create a form at: civicrm/user/payment/collect?reset=1&cid=202&id=bulk1
  * The form allows you to collect a number of contributions together and create a single "bulk" one that will
@@ -12,6 +14,11 @@
 class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment {
 
   /**
+   * @var string The Bulk identifier (without BULK_)
+   */
+  protected $bulkIdentifier;
+
+  /**
    * Pre process form.
    *
    * @throws \CRM_Core_Exception
@@ -19,16 +26,19 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
    */
   public function preProcess() {
     if (!$this->getContactID()) {
-      \Civi::log()->error('Missing contactID for user/payment/collect');
+      \Civi::log()->error('Userpayment: Missing contactID for user/payment/collect');
       throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
     }
 
-    $bulkIdentifier = CRM_Utils_Request::retrieveValue('id', 'String');
-    if (!$bulkIdentifier) {
-      \Civi::log()->error('Missing bulkIdentifier for user/payment/collect');
+    $this->bulkIdentifier = CRM_Utils_Request::retrieveValue('id', 'String');
+    if (!$this->bulkIdentifier) {
+      \Civi::log()->error('Userpayment: Missing bulkIdentifier for user/payment/collect');
       throw new CRM_Core_Exception(ts('You do not have permission to access this page.'));
     }
-    $this->assign('bulkIdentifier', $bulkIdentifier);
+    if (CRM_Userpayment_BulkContributions::getMasterIdentifier($this->bulkIdentifier) === $this->bulkIdentifier) {
+      $this->bulkIdentifier = CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($this->bulkIdentifier);
+    }
+    $this->assign('bulkIdentifier', $this->bulkIdentifier);
 
     // We can access this if the contact has edit permissions and provided a valid checksum
     if (!CRM_Contact_BAO_Contact_Permission::validateChecksumContact($this->getContactID(), $this)) {
@@ -65,7 +75,7 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
    */
   public function setDefaultValues() {
     $defaults = [];
-    $defaults['id'] = CRM_Utils_Request::retrieveValue('id', 'String', NULL, TRUE);
+    $defaults['id'] = $this->bulkIdentifier;
     return $defaults;
   }
 
@@ -102,10 +112,11 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
 
     // Do we already have a contribution for this bulk payment?
     try {
-      $masterContribution = civicrm_api3('Contribution', 'getsingle', [
-        'return' => ["contribution_status_id", "id"],
-        CRM_Userpayment_BulkContributions::getIdentifierFieldName() => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier),
-      ]);
+      $masterContribution = Contribution::get(FALSE)
+        ->addSelect('*', 'bulk_payments.identifier')
+        ->addWhere('bulk_payments.identifier', '=', CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier))
+        ->execute()
+        ->first();
       $contributionParams['id'] = $masterContribution['id'];
       if ((int) $masterContribution['contribution_status_id'] !== (int) CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
         CRM_Core_Error::statusBounce('A bulk contribution already exists and is not in Pending state');
@@ -119,11 +130,12 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
 
     $note = implode(PHP_EOL, $listOfIDs);
     $note = $bulkContribution['id'] . ': ' . $bulkContribution['total_amount'] . ': ' . CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier) . PHP_EOL . $note;
-    civicrm_api3('Note', 'create', [
-      'entity_id' => $bulkContribution['contact_id'],
-      'note' => $note,
-      'subject' => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier),
-    ]);
+    \Civi\Api4\Note::create(FALSE)
+      ->addValue('entity_id', $bulkContribution['contact_id'])
+      ->addValue('entity_table:name', 'Contact')
+      ->addValue('note', $note)
+      ->addValue('subject', CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier))
+      ->execute();
 
     $url = CRM_Utils_System::url(\Civi::settings()->get('userpayment_paymentcollect_redirecturl'), "coid={$bulkContribution['id']}&cid={$this->getContactID()}");
     CRM_Utils_System::redirect($url);

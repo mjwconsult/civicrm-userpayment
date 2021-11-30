@@ -8,7 +8,6 @@
     <div class="section-bulk-identifier">
       <label for="bulk-identifier">Bulk Identifier:</label> <span id="bulk-identifier">{$bulkIdentifier}</span>
     </div>
-  {$form.id.html}
     <div class="section-add-contribution">
     <label for="add-contribution-id">Add Payment Number:</label> <input type="text" id="add-contribution-id" onkeydown="window.collectPayments.addEnter(event)"/>
       <input type="button" value="Add" id="btn-add-contribution" onclick="window.collectPayments.add()"/>
@@ -25,11 +24,6 @@
         </tr>
         </thead>
       </table>
-
-      <td class="crm-downloadpayment_contribution_id">{$row.contribution_id}</td>
-      <td class="crm-downloadpayment_name">{$row.name}</td>
-      <td class="crm-downloadpayment_amount">{$row.amount}</td>
-      <td class="crm-downloadpayment_description">{$row.description}</td>
 
     {literal}
       <script type="text/javascript">

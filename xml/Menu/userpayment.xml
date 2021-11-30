@@ -79,14 +79,17 @@
   <item>
     <path>civicrm/ajax/collectpayments</path>
     <page_callback>CRM_Userpayment_AJAX::getBulkContributions</page_callback>
+    <access_arguments>access AJAX API</access_arguments>
   </item>
   <item>
     <path>civicrm/ajax/collectpayments/remove</path>
     <page_callback>CRM_Userpayment_AJAX::removeBulkContribution</page_callback>
+    <access_arguments>access AJAX API</access_arguments>
   </item>
   <item>
     <path>civicrm/ajax/collectpayments/add</path>
     <page_callback>CRM_Userpayment_AJAX::addBulkContribution</page_callback>
+    <access_arguments>access AJAX API</access_arguments>
   </item>
 
 </menu>

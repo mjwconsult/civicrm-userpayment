@@ -3,6 +3,9 @@
  * https://civicrm.org/licensing
  */
 
+use Civi\Api4\Contact;
+use Civi\Api4\Contribution;
+
 /**
  * Generic helper class for CRM_Userpayment
  * Class CRM_Userpayment_BulkContributions
@@ -37,7 +40,7 @@ class CRM_Userpayment_BulkContributions {
    * @return string
    */
   public static function getMasterIdentifier($identifier) {
-    if (strcmp($identifier, self::MASTER_PREFIX . $identifier) === 0) {
+    if (strcmp($identifier, self::MASTER_PREFIX . self::getBulkIdentifierFromMaster($identifier)) === 0) {
       return $identifier;
     }
     return self::MASTER_PREFIX . "{$identifier}";
@@ -47,10 +50,33 @@ class CRM_Userpayment_BulkContributions {
    * Return the identifier for the bulk contributions when given the identifier of the master contribution
    * @param string $identifier
    *
-   * @return bool|string
+   * @return string
    */
   public static function getBulkIdentifierFromMaster($identifier) {
     return substr($identifier, 5);
+  }
+
+  /**
+   * @param string $bulkIdentifier without the BULK_ prefix.
+   *
+   * @throws \API_Exception
+   * @throws \Civi\API\Exception\UnauthorizedException
+   */
+  public static function getMasterContribution(string $bulkIdentifier): array {
+    return Contribution::get(FALSE)
+      ->addSelect('*', 'bulk_payments.identifier')
+      ->addWhere('bulk_payments.identifier', '=', CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier))
+      ->execute()
+      ->first();
+  }
+
+  /**
+   * @param array $masterContribution
+   *
+   * @return bool
+   */
+  public static function isMasterContributionCompleted(array $masterContribution): bool {
+    return ((int)$masterContribution['contribution_status_id'] === (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed'));
   }
 
   /**
@@ -68,6 +94,11 @@ class CRM_Userpayment_BulkContributions {
 
     // Get all contributions with a bulk identifier matching the one specified on the form
     $contributions = self::getContributionsForBulkIdentifier($params['cnum']);
+    $masterContribution = self::getMasterContribution($params['cnum']);
+    $paid = FALSE;
+    if (self::isMasterContributionCompleted($masterContribution)) {
+      $paid = TRUE;
+    }
 
     $sum = 0;
     foreach ($contributions as $contributionID => $contributionDetail) {
@@ -80,7 +111,7 @@ class CRM_Userpayment_BulkContributions {
         'name' => $contactDisplayName,
         'amount' => CRM_Utils_Money::format($contributionDetail['total_amount'], $contributionDetail['currency']),
         'description' => CRM_Userpayment_BulkContributions::getContributionDescription($contributionDetail),
-        'links' => "<a href='#' data-id='{$contributionDetail['id']}' class='collect-remove' onclick='window.collectPayments.removeItem(this)'>Remove</a>",
+        'links' => $paid ? '' : "<a href='#' data-id='{$contributionDetail['id']}' class='collect-remove' onclick='window.collectPayments.removeItem(this)'>Remove</a>",
       ];
       $sum += $contributionDetail['total_amount'];
       $rows[] = $row;
@@ -93,7 +124,7 @@ class CRM_Userpayment_BulkContributions {
       'contribution_id' => '',
       'name' => '',
       'amount' => '<strong>' . CRM_Utils_Money::format($sum, $contributionDetail['currency']) . '</strong>',
-      'description' => '<strong>Total to pay</strong>',
+      'description' => $paid ? '<strong>Total paid</strong>' : '<strong>Total to pay</strong>',
       'links' => NULL,
     ];
     return $rows;
@@ -103,7 +134,7 @@ class CRM_Userpayment_BulkContributions {
    * Return a suitable description for a contribution to be displayed on lists
    * @param array $contribution
    *
-   * @return mixed|string
+   * @return string
    * @throws \CiviCRM_API3_Exception
    */
   public static function getContributionDescription($contribution) {
@@ -124,23 +155,26 @@ class CRM_Userpayment_BulkContributions {
    * Return a formatted displayname for contactID based on userpayment_nameformat setting
    * @param int $contactID
    *
-   * @return array|string
-   * @throws \CiviCRM_API3_Exception
+   * @return string
+   * @throws \API_Exception
+   * @throws \Civi\API\Exception\UnauthorizedException
    */
   public static function getFormattedDisplayName($contactID) {
     switch ((int)\Civi::settings()->get('userpayment_nameformat')) {
       case CRM_Userpayment_BulkContributions::PAYMENT_NAMEFORMAT_FULL:
-        return civicrm_api3('Contact', 'getvalue', [
-          'return' => "display_name",
-          'id' => $contactID,
-        ]);
+        return Contact::get(FALSE)
+          ->addSelect('display_name')
+          ->addWhere('id', '=', $contactID)
+          ->execute()
+          ->first()['display_name'];
 
       case CRM_Userpayment_BulkContributions::PAYMENT_NAMEFORMAT_INITIALS:
         $initialsFields = ['first_name', 'middle_name', 'last_name'];
-        $contactDetails = civicrm_api3('Contact', 'getsingle', [
-          'return' => ['first_name', 'middle_name', 'last_name'],
-          'id' => $contactID,
-        ]);
+        $contactDetails = Contact::get(FALSE)
+          ->addSelect('first_name', 'middle_name', 'last_name')
+          ->addWhere('id', '=', $contactID)
+          ->execute()
+          ->first();
         $initials = '';
         foreach ($initialsFields as $field) {
           if (!empty($contactDetails[$field])) {
@@ -170,7 +204,8 @@ class CRM_Userpayment_BulkContributions {
    * @param int $contributionId
    * @param string $bulkIdentifier - the client bulk identifier
    *
-   * @throws \CiviCRM_API3_Exception
+   * @throws \API_Exception
+   * @throws \Civi\API\Exception\UnauthorizedException
    */
   public static function removeFromBulkContribution($contributionId, $bulkIdentifier) {
     if (isset(Civi::$statics[__CLASS__]['removebulkcontribution'])) {
@@ -188,16 +223,22 @@ class CRM_Userpayment_BulkContributions {
       return;
     }
 
-
-    $contribution = civicrm_api3('Contribution', 'getsingle', ['id' => $contributionId]);
+    $contribution = Contribution::get(FALSE)
+      ->addSelect('*', 'bulk_payments.identifier')
+      ->addWhere('id', '=', $contributionId)
+      ->execute()
+      ->first();
 
     // This checks if a contribution has been paid and is part of a bulk contribution
     // If so, the bulk contribution is reduced by that amount and the bulk identifier removed
 
-    $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
     // We have a completed contribution with a bulk identifier - does it have a corresponding bulk contribution?
     try {
-      $masterContribution = civicrm_api3('Contribution', 'getsingle', [$customFieldName => CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier)]);
+      $masterContribution = Contribution::get(FALSE)
+        ->addSelect('*', 'bulk_payments.identifier')
+        ->addWhere('bulk_payments.identifier', '=', CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier))
+        ->execute()
+        ->first();
 
       if (empty($contribution['total_amount'])) {
         return;
@@ -212,18 +253,18 @@ class CRM_Userpayment_BulkContributions {
       $contributions = CRM_Userpayment_BulkContributions::getContributionsForBulkIdentifier($bulkIdentifier);
 
       $masterAmounts = ['total_amount' => 0, 'tax_amount' => 0, 'fee_amount' => 0];
-      foreach ($contributions as $contributionID => $contributionDetail) {
+      foreach ($contributions as $contributionDetail) {
         $masterAmounts['total_amount'] += ((float) $contributionDetail['total_amount'] ?? 0);
         $masterAmounts['tax_amount'] += ((float) $contributionDetail['tax_amount'] ?? 0);
         $masterAmounts['fee_amount'] += ((float) $contributionDetail['fee_amount'] ?? 0);
       }
 
-      civicrm_api3('Contribution', 'create', [
-        'id' => $masterContribution['id'],
-        'total_amount' => $masterAmounts['total_amount'],
-        'tax_amount' => $masterAmounts['tax_amount'],
-        'fee_amount' => $masterAmounts['fee_amount'],
-      ]);
+      Contribution::update(FALSE)
+        ->addValue('total_amount', $masterAmounts['total_amount'])
+        ->addValue('tax_amount', $masterAmounts['tax_amount'])
+        ->addValue('fee_amount', $masterAmounts['fee_amount'])
+        ->addWhere('id', '=', $masterContribution['id'])
+        ->execute();
     }
     catch (Exception $e) {
       // We've either not found one or there is more than one. Don't handle it.
@@ -231,6 +272,12 @@ class CRM_Userpayment_BulkContributions {
     }
   }
 
+  /**
+   * @param int $masterContributionID
+   *
+   * @throws \API_Exception
+   * @throws \Civi\API\Exception\UnauthorizedException
+   */
   public static function removeFromDeletedBulkContribution($masterContributionID) {
     if (isset(Civi::$statics[__CLASS__]['removefromdeletedbulkcontribution'])) {
       return;
@@ -239,17 +286,21 @@ class CRM_Userpayment_BulkContributions {
 
     // This checks if a contribution has been paid and is part of a bulk contribution
     // If so, the bulk contribution is reduced by that amount and the bulk identifier removed
-    $customFieldName = CRM_Userpayment_BulkContributions::getIdentifierFieldName();
-    $masterContribution = civicrm_api3('Contribution', 'getsingle', [
-      'id' => $masterContributionID,
-    ]);
-    if (empty($masterContribution[$customFieldName])) {
+    $masterContribution = Contribution::get(FALSE)
+      ->addSelect('*', 'bulk_payments.identifier')
+      ->addWhere('id', '=', $masterContributionID)
+      ->execute()
+      ->first();
+    if (empty($masterContribution['bulk_payments.identifier'])) {
       return;
     }
 
     // We have a completed contribution with a bulk identifier - does it have a corresponding bulk contribution?
     try {
-      $bulkContributions = civicrm_api3('Contribution', 'get', [$customFieldName => CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($masterContribution[$customFieldName])])['values'];
+      $bulkContributions = Contribution::get(FALSE)
+        ->addSelect('*', 'bulk_payments.identifier')
+        ->addWhere('bulk_payments.identifier', '=', CRM_Userpayment_BulkContributions::getBulkIdentifierFromMaster($masterContribution['bulk_payments.identifier']))
+        ->execute();
       foreach ($bulkContributions as $contributionID => $contributionDetail) {
         // Loop through all contributions linked to the master and remove the bulk identifier
         $groupID = civicrm_api3('CustomGroup', 'getvalue', [
@@ -271,23 +322,36 @@ class CRM_Userpayment_BulkContributions {
     }
   }
 
+  /**
+   * @param string $bulkIdentifier
+   *
+   * @return array
+   * @throws \API_Exception
+   * @throws \CiviCRM_API3_Exception
+   * @throws \Civi\API\Exception\UnauthorizedException
+   */
   public static function getContributionsForBulkIdentifier($bulkIdentifier) {
     // Get all contributions with a bulk identifier matching the one specified on the form
-    $contributions = civicrm_api3('Contribution', 'get', [
-      self::getIdentifierFieldName() => $bulkIdentifier,
-    ])['values'];
+    $contributions = Contribution::get(FALSE)
+      ->addSelect('*', 'bulk_payments.identifier')
+      ->addWhere('bulk_payments.identifier', '=', $bulkIdentifier)
+      ->execute();
+    if (empty($contributions->count())) {
+      return [];
+    }
 
+    $result = [];
     foreach ($contributions as $contribution) {
       $contributionBalance = civicrm_api3('Contribution', 'getbalance', [
         'id' => $contribution['id'],
       ])['values'];
       $contributionBalance['total_amount'] = $contributionBalance['total'];
       $contributionBalance['tax_amount'] = $contributionBalance['tax_amount'] ?? 0;
-      $contributions[$contribution['id']] = array_merge($contributions[$contribution['id']], $contributionBalance);
-      $contributions[$contribution['id']]['tax_amount'] = $contributions[$contribution['id']]['tax_amount'] ?? 0;
+      $result[$contribution['id']] = array_merge($contribution, $contributionBalance);
+      $result[$contribution['id']]['tax_amount'] = $contribution['tax_amount'] ?? 0;
     }
 
-    return $contributions ?? [];
+    return $result;
   }
 
 }
