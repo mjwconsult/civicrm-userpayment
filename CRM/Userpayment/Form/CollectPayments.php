@@ -91,7 +91,7 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
     $contributions = CRM_Userpayment_BulkContributions::getContributionsForBulkIdentifier($bulkIdentifier);
 
     $amounts = ['total_amount' => 0, 'tax_amount' => 0, 'fee_amount' => 0];
-    foreach ($contributions as $contributionID => $contributionDetail) {
+    foreach ($contributions as $contributionDetail) {
       $amounts['total_amount'] += ((float) $contributionDetail['total_amount'] ?? 0);
       $amounts['tax_amount'] += ((float) $contributionDetail['tax_amount'] ?? 0);
       $amounts['fee_amount'] += ((float) $contributionDetail['fee_amount'] ?? 0);
@@ -112,19 +112,25 @@ class CRM_Userpayment_Form_CollectPayments extends CRM_Userpayment_Form_Payment 
 
     // Do we already have a contribution for this bulk payment?
     try {
+      $identif = CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier);
       $masterContribution = Contribution::get(FALSE)
         ->addSelect('*', 'bulk_payments.identifier')
         ->addWhere('bulk_payments.identifier', '=', CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier))
         ->execute()
         ->first();
-      $contributionParams['id'] = $masterContribution['id'];
-      if ((int) $masterContribution['contribution_status_id'] !== (int) CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
-        CRM_Core_Error::statusBounce('A bulk contribution already exists and is not in Pending state');
+
+      if (!empty($masterContribution)) {
+        // We've already created a master contribution
+        $contributionParams['id'] = $masterContribution['id'];
+        if ((int) $masterContribution['contribution_status_id'] !== (int) CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
+          CRM_Core_Error::statusBounce('A bulk contribution already exists and is not in Pending state');
+        }
       }
     }
     catch (Exception $e) {
       // do nothing
     }
+    // Create (or update) the master contribution
     $bulkContribution = civicrm_api3('Contribution', 'create', $contributionParams);
     $bulkContribution = $bulkContribution['values'][$bulkContribution['id']];
 

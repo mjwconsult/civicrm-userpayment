@@ -67,7 +67,7 @@ class CRM_Userpayment_BulkContributions {
       ->addSelect('*', 'bulk_payments.identifier')
       ->addWhere('bulk_payments.identifier', '=', CRM_Userpayment_BulkContributions::getMasterIdentifier($bulkIdentifier))
       ->execute()
-      ->first();
+      ->first() ?? [];
   }
 
   /**
@@ -76,6 +76,10 @@ class CRM_Userpayment_BulkContributions {
    * @return bool
    */
   public static function isMasterContributionCompleted(array $masterContribution): bool {
+    if (empty($masterContribution)) {
+      // Not yet created
+      return FALSE;
+    }
     return ((int)$masterContribution['contribution_status_id'] === (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed'));
   }
 
@@ -100,8 +104,10 @@ class CRM_Userpayment_BulkContributions {
       $paid = TRUE;
     }
 
+    $currency = $masterContribution['currency'] ?? CRM_Core_Config::singleton()->defaultCurrency;
+
     $sum = 0;
-    foreach ($contributions as $contributionID => $contributionDetail) {
+    foreach ($contributions as $contributionDetail) {
       $contactDisplayName = CRM_Userpayment_BulkContributions::getFormattedDisplayName($contributionDetail['contact_id']);
       $row = [
         'DT_RowId' => $contributionDetail['id'],
@@ -123,7 +129,7 @@ class CRM_Userpayment_BulkContributions {
       'DT_RowClass' => 'crm-entity',
       'contribution_id' => '',
       'name' => '',
-      'amount' => '<strong>' . CRM_Utils_Money::format($sum, $contributionDetail['currency']) . '</strong>',
+      'amount' => '<strong>' . CRM_Utils_Money::format($sum, $currency) . '</strong>',
       'description' => $paid ? '<strong>Total paid</strong>' : '<strong>Total to pay</strong>',
       'links' => NULL,
     ];

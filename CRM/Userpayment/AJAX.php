@@ -88,19 +88,19 @@ class CRM_Userpayment_AJAX {
       self::returnAjaxError("Cannot add to a bulk payment that has already been paid!");
     }
     // Don't add a second time
-    if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()] === $params['cnum']) {
+    if ($existingContribution['bulk_payments.identifier'] === $params['cnum']) {
       self::returnAjaxError("You have already added {$params['coid']} to this bulk payment!");
     }
     // Only allow adding pending contributions
     if ((int)$existingContribution['contribution_status_id'] !== (int)CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Pending')) {
       self::returnAjaxError("Cannot add payment {$params['coid']} because it is not in \"Pending\" status");
     }
-    if ($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()]
+    if ($existingContribution['bulk_payments.identifier']
       === CRM_Userpayment_BulkContributions::getMasterIdentifier($params['cnum'])) {
       self::returnAjaxError('You cannot add a bulk payment to itself!');
     }
     // Don't add if it's already added to another bulk contribution
-    if (!empty($existingContribution[CRM_Userpayment_BulkContributions::getIdentifierFieldName()])) {
+    if (!empty($existingContribution['bulk_payments.identifier'])) {
       self::returnAjaxError('This ID is already assigned to another bulk payment');
     }
 

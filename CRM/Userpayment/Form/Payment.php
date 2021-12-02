@@ -158,7 +158,7 @@ class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayme
     // required by processBillingAddress. Otherwise it creates a duplicate contact
     $this->_contributorContactID = $this->getContactID();
 
-    if (\Civi::settings()->get('userpayment_paymentadd_captcha')) {
+    if (\Civi::settings()->get('userpayment_paymentadd_captcha') && !CRM_Core_Session::getLoggedInContactID()) {
       // Add reCAPTCHA
       if (is_callable(['CRM_Utils_ReCAPTCHA', 'enableCaptchaOnForm'])) {
         CRM_Utils_ReCAPTCHA::enableCaptchaOnForm($this);
