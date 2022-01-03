@@ -284,6 +284,15 @@ function userpayment_civicrm_alterMailParams(&$params, $context) {
         $lineItems = [];
         foreach (CRM_Utils_Array::value('values', $contributions) as $contributionID => $contributionDetail) {
           $line = CRM_Price_BAO_LineItem::getLineItemsByContributionID($contributionID);
+          // append display name to the line item labels
+          if (!empty($contributionDetail['contact_id'])) {
+            $displayName = CRM_Core_DAO::getFieldValue('CRM_Contact_DAO_Contact', $contributionDetail['contact_id'], 'display_name');
+            foreach ($line as $lineId => &$lineVal) {
+              if (!empty($lineVal['label'])) {
+                $lineVal['label'] = $displayName . ' - ' . $lineVal['label'];
+              }
+            }
+          }
           $lineItems = $lineItems + $line;
         }
         if (!empty($lineItems)) {
