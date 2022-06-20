@@ -13,15 +13,6 @@ function userpayment_civicrm_config(&$config) {
 }
 
 /**
- * Implements hook_civicrm_xmlMenu().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_xmlMenu
- */
-function userpayment_civicrm_xmlMenu(&$files) {
-  _userpayment_civix_civicrm_xmlMenu($files);
-}
-
-/**
  * Implements hook_civicrm_install().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_install
@@ -93,27 +84,6 @@ function userpayment_civicrm_disable() {
  */
 function userpayment_civicrm_upgrade($op, CRM_Queue_Queue $queue = NULL) {
   return _userpayment_civix_civicrm_upgrade($op, $queue);
-}
-
-/**
- * Implements hook_civicrm_managed().
- *
- * Generate a list of entities to create/deactivate/delete when this module
- * is installed, disabled, uninstalled.
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_managed
- */
-function userpayment_civicrm_managed(&$entities) {
-  _userpayment_civix_civicrm_managed($entities);
-}
-
-/**
- * Implements hook_civicrm_alterSettingsFolders().
- *
- * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_alterSettingsFolders
- */
-function userpayment_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
-  _userpayment_civix_civicrm_alterSettingsFolders($metaDataFolders);
 }
 
 /**
