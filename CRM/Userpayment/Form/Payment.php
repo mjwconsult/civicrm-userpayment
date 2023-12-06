@@ -53,7 +53,7 @@ class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayme
    * @return int
    * @throws \CRM_Core_Exception
    */
-  public function getContactID() {
+  public function getContactID():?int {
     if (empty($this->contactID)) {
       $this->contactID = (int) CRM_Utils_Request::retrieveValue('cid', 'Positive');
       if (empty($this->contactID)) {
