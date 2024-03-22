@@ -74,6 +74,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
 
     $this->addField('trxn_date', ['entity' => 'FinancialTrxn', 'label' => E::ts('Date Received'), 'context' => 'Contribution'], FALSE, FALSE);
     $this->add('hidden', 'coid');
+    $this->add('hidden', 'cid');
 
     list($this->_contributorDisplayName, $this->_contributorEmail) = CRM_Contact_BAO_Contact_Location::getEmailDetails($this->getContactID());
     $this->assign('displayName', $this->_contributorDisplayName);
@@ -119,6 +120,7 @@ class CRM_Userpayment_Form_AddPayment extends CRM_Userpayment_Form_Payment {
 
     $defaults['total_amount'] = CRM_Utils_Money::formatLocaleNumericRoundedForDefaultCurrency($this->getContributionBalance()['balance']);
     $defaults['coid'] = $this->getContributionID();
+    $defaults['cid'] = $this->getContactID();
 
     $defaults['payment_processor_id'] = $this->_paymentProcessor['id'];
 
