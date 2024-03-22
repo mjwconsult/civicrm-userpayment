@@ -161,7 +161,7 @@ class CRM_Userpayment_Form_BulkPayment extends CRM_Userpayment_Form_Payment {
   public function submit($submittedValues) {
     $this->_params = $submittedValues;
     $this->beginPostProcess();
-    $this->processBillingAddress();
+    $this->processBillingAddress($this->getContactID(), $this->_contributorEmail);
     $this->processCreditCard();
 
     if ($this->_params['payment_status_id'] !== CRM_Core_PseudoConstant::getKey('CRM_Contribute_BAO_Contribution', 'contribution_status_id', 'Completed')) {

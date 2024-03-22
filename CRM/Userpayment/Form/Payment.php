@@ -260,7 +260,7 @@ class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayme
   public function submit($submittedValues) {
     $this->_params = $submittedValues;
     $this->beginPostProcess();
-    $this->processBillingAddress();
+    $this->processBillingAddress($this->getContactID(), $this->_contributorEmail);
     $this->processCreditCard();
 
     $paymentParams = [
