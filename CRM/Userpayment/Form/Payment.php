@@ -39,7 +39,7 @@ class CRM_Userpayment_Form_Payment extends CRM_Contribute_Form_AbstractEditPayme
    * @return int
    * @throws \CRM_Core_Exception
    */
-  protected function getContributionID(): ?int {
+  public function getContributionID(): ?int {
     if (empty($this->contributionID)) {
       $this->contributionID = (int) CRM_Utils_Request::retrieveValue('coid', 'Positive');
     }
